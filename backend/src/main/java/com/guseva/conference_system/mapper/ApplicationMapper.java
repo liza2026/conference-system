@@ -2,6 +2,7 @@ package com.guseva.conference_system.mapper;
 
 import java.util.stream.Collectors;
 
+import com.guseva.conference_system.util.FileNames;
 import org.springframework.stereotype.Component;
 
 import com.guseva.conference_system.dto.ApplicationResponse;
@@ -48,9 +49,8 @@ public class ApplicationMapper {
         String authors = a.getAuthors().stream()
                 .map(x -> PersonNames.shortName(x.getLastName(), x.getFirstName(), x.getMiddleName()))
                 .collect(Collectors.joining(", "));
-        String original = a.getThesisFileName();
-        int dot = original.lastIndexOf('.');
-        String extension = dot >= 0 ? original.substring(dot) : "";
-        return a.getDirection().getId() + " – " + authors + extension;
+        String extension = FileNames.extension(a.getThesisFileName());
+        return a.getDirection().getId() + " – " + authors
+                + (extension.isEmpty() ? "" : "." + extension);
     }
 }
