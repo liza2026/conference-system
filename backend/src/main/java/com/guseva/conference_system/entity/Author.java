@@ -28,8 +28,14 @@ public class Author {
     @Column(nullable = false)
     private short position;
 
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "middle_name")
+    private String middleName;   // необязательное
 
     @Column(name = "group_name", nullable = false)
     private String groupName;
@@ -47,15 +53,19 @@ public class Author {
     protected Author() {
     }
 
-    Author(Application application, int position, String fullName, String groupName,
-           String phone, String email, Funding funding) {
+    Author(Application application, int position, String lastName, String firstName,
+           String middleName, String groupName, String phone, String email, Funding funding) {
         this.application = application;
         this.position = (short) position;
-        update(fullName, groupName, phone, email, funding);
+        update(lastName, firstName, middleName, groupName, phone, email, funding);
     }
 
-    public void update(String fullName, String groupName, String phone, String email, Funding funding) {
-        this.fullName = fullName;
+    public void update(String lastName, String firstName, String middleName, String groupName,
+                       String phone, String email, Funding funding) {
+        this.lastName = lastName;
+        this.firstName = firstName;
+        // нет отчества - null
+        this.middleName = (middleName == null || middleName.isBlank()) ? null : middleName.trim();
         this.groupName = groupName;
         this.phone = phone;
         this.email = email;
@@ -64,7 +74,9 @@ public class Author {
 
     public Long getId() { return id; }
     public short getPosition() { return position; }
-    public String getFullName() { return fullName; }
+    public String getLastName() { return lastName; }
+    public String getFirstName() { return firstName; }
+    public String getMiddleName() { return middleName; }
     public String getGroupName() { return groupName; }
     public String getPhone() { return phone; }
     public String getEmail() { return email; }

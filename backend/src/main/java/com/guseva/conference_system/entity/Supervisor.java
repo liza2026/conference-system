@@ -26,8 +26,14 @@ public class Supervisor {
     @Column(nullable = false)
     private short position;
 
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "middle_name")
+    private String middleName;   // необязательное
 
     /** Должность и кафедра, например «доцент каф. АПП». */
     @Column(nullable = false)
@@ -36,19 +42,24 @@ public class Supervisor {
     protected Supervisor() {
     }
 
-    Supervisor(Application application, int position, String fullName, String post) {
+    Supervisor(Application application, int position, String lastName, String firstName,
+               String middleName, String post) {
         this.application = application;
         this.position = (short) position;
-        update(fullName, post);
+        update(lastName, firstName, middleName, post);
     }
 
-    public void update(String fullName, String post) {
-        this.fullName = fullName;
+    public void update(String lastName, String firstName, String middleName, String post) {
+        this.lastName = lastName;
+        this.firstName = firstName;
+        this.middleName = (middleName == null || middleName.isBlank()) ? null : middleName.trim();
         this.post = post;
     }
 
     public Long getId() { return id; }
     public short getPosition() { return position; }
-    public String getFullName() { return fullName; }
+    public String getLastName() { return lastName; }
+    public String getFirstName() { return firstName; }
+    public String getMiddleName() { return middleName; }
     public String getPost() { return post; }
 }

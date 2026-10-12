@@ -162,12 +162,12 @@ public class ApplicationService {
             AuthorRequest item = items.get(i);
             if (i < existing) {
                 // автор с таким номером уже есть - обновляем его данные
-                application.getAuthors().get(i).update(
-                        item.fullName(), item.groupName(), item.phone(), item.email(), item.funding());
+                application.getAuthors().get(i).update(item.lastName(), item.firstName(),
+                        item.middleName(), item.groupName(), item.phone(), item.email(), item.funding());
             } else {
                 // такого номера ещё нет - добавляем нового
-                application.addAuthor(
-                        item.fullName(), item.groupName(), item.phone(), item.email(), item.funding());
+                application.addAuthor(item.lastName(), item.firstName(),
+                        item.middleName(), item.groupName(), item.phone(), item.email(), item.funding());
             }
         }
         // если авторов стало меньше - убрать лишних с конца
@@ -185,10 +185,12 @@ public class ApplicationService {
             SupervisorRequest item = items.get(i);
             if (i < existing) {
                 // руководитель с таким номером уже есть - обновляем его данные
-                application.getSupervisors().get(i).update(item.fullName(), item.post());
+                application.getSupervisors().get(i).update(item.lastName(), item.firstName(),
+                        item.middleName(), item.post());
             } else {
                 // такого номера ещё нет - добавляем нового
-                application.addSupervisor(item.fullName(), item.post());
+                application.addSupervisor(item.lastName(), item.firstName(),
+                        item.middleName(), item.post());
             }
         }
         // если авторов стало меньше - убрать лишних с конца

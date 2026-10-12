@@ -91,9 +91,10 @@ public class Application {
     }
 
     /** Добавляет автора; его номер (1 или 2) выставляется по порядку. */
-    public Author addAuthor(String fullName, String groupName, String phone,
-                            String email, Funding funding) {
-        Author author = new Author(this, authors.size() + 1, fullName, groupName, phone, email, funding);
+    public Author addAuthor(String lastName, String firstName, String middleName, String groupName,
+                            String phone, String email, Funding funding) {
+        Author author = new Author(this, authors.size() + 1, lastName, firstName, middleName,
+                groupName, phone, email, funding);
         authors.add(author);
         return author;
     }
@@ -102,8 +103,9 @@ public class Application {
         authors.remove(authors.size() - 1);
     }
 
-    public Supervisor addSupervisor(String fullName, String post) {
-        Supervisor supervisor = new Supervisor(this, supervisors.size() + 1, fullName, post);
+    public Supervisor addSupervisor(String lastName, String firstName, String middleName, String post) {
+        Supervisor supervisor = new Supervisor(this, supervisors.size() + 1,
+                lastName, firstName, middleName, post);
         supervisors.add(supervisor);
         return supervisor;
     }

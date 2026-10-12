@@ -5,9 +5,20 @@ import com.guseva.conference_system.entity.Funding;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record AuthorRequest (
-        @NotBlank String fullName,
+        @NotBlank @Size(max = 100) @Pattern(regexp = "^[\\p{L}][\\p{L} '\\-]*$",
+                message = "только буквы, пробел, дефис") String lastName,
+
+        @NotBlank @Size(max = 100) @Pattern(regexp = "^[\\p{L}][\\p{L} '\\-]*$",
+                message = "только буквы, пробел, дефис") String firstName,
+
+        // отчество необязательное: может быть null или пустым, но если есть - только буквы
+        @Size(max = 100) @Pattern(regexp = "^([\\p{L}][\\p{L} '\\-]*)?$",
+                message = "только буквы, пробел, дефис") String middleName,
+
         @NotBlank String groupName,
         @NotBlank String phone,
         @NotBlank @Email String email,

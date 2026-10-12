@@ -1,8 +1,18 @@
 package com.guseva.conference_system.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record SupervisorRequest (
-        @NotBlank String fullName,
+        @NotBlank @Size(max = 100) @Pattern(regexp = "^[\\p{L}][\\p{L} '\\-]*$",
+                message = "только буквы, пробел, дефис") String lastName,
+
+        @NotBlank @Size(max = 100) @Pattern(regexp = "^[\\p{L}][\\p{L} '\\-]*$",
+                message = "только буквы, пробел, дефис") String firstName,
+
+        @Size(max = 100) @Pattern(regexp = "^([\\p{L}][\\p{L} '\\-]*)?$",
+                message = "только буквы, пробел, дефис") String middleName,
+
         @NotBlank String post) {
 }

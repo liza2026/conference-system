@@ -40,7 +40,9 @@ CREATE TABLE author (
     id             BIGSERIAL    PRIMARY KEY,
     application_id BIGINT       NOT NULL REFERENCES application (id) ON DELETE CASCADE,
     position       SMALLINT     NOT NULL CHECK (position IN (1, 2)),
-    full_name      VARCHAR(255) NOT NULL,
+    last_name      VARCHAR(100) NOT NULL,
+    first_name     VARCHAR(100) NOT NULL,
+    middle_name    VARCHAR(100),
     group_name     VARCHAR(50)  NOT NULL,
     phone          VARCHAR(30)  NOT NULL,
     email          VARCHAR(255) NOT NULL,
@@ -53,7 +55,9 @@ CREATE TABLE supervisor (
     id             BIGSERIAL    PRIMARY KEY,
     application_id BIGINT       NOT NULL REFERENCES application (id) ON DELETE CASCADE,
     position       SMALLINT     NOT NULL CHECK (position IN (1, 2)),
-    full_name      VARCHAR(255) NOT NULL,
+    last_name      VARCHAR(100) NOT NULL,
+    first_name     VARCHAR(100) NOT NULL,
+    middle_name    VARCHAR(100),
     post           VARCHAR(255) NOT NULL,
     UNIQUE (application_id, position)
 );
