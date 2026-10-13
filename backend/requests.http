@@ -1,0 +1,65 @@
+### 1. Подать заявку (два автора, у второго нет отчества)
+POST http://localhost:8080/api/applications
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="data"
+Content-Type: application/json
+
+{
+  "title": "Разработка математической модели насоса",
+  "directionId": 2,
+  "authors": [
+    {"lastName": "Иванов", "firstName": "Иван", "middleName": "Иванович",
+     "groupName": "УТС-420", "phone": "8-900-000-00-00",
+     "email": "ivanov@mail.ru", "funding": "BUDGET"},
+    {"lastName": "Карпов", "firstName": "Кирилл",
+     "groupName": "АТП-421", "phone": "8-900-111-11-11",
+     "email": "karpov@mail.ru", "funding": "CONTRACT"}
+  ],
+  "supervisors": [
+    {"lastName": "Дроботов", "firstName": "Алексей", "middleName": "Владимирович",
+     "post": "доцент каф. АПП"}
+  ]
+}
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="thesis.docx"
+Content-Type: application/octet-stream
+
+тут будет текст тезисов
+--boundary--
+
+### 2. Список заявок
+GET http://localhost:8080/api/applications
+
+### 3. Скачать файл (имя должно быть "2 – Иванов И.И., Карпов К..docx")
+GET http://localhost:8080/api/applications/1/file
+
+### 4. Отозвать заявку 1
+POST http://localhost:8080/api/applications/1/withdraw
+
+### 5. Повторный отзыв (ожидаем 409)
+POST http://localhost:8080/api/applications/1/withdraw
+
+### 6. Изменить заявку 2: один автор, другое направление и название, файл не присылаем
+PUT http://localhost:8080/api/applications/2
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="data"
+Content-Type: application/json
+
+{
+  "title": "Новое название работы",
+  "directionId": 7,
+  "authors": [
+    {"lastName": "Иванов", "firstName": "Иван", "middleName": "Иванович",
+     "groupName": "УТС-420", "phone": "8-900-000-00-00",
+     "email": "ivanov@mail.ru", "funding": "BUDGET"}
+  ],
+  "supervisors": [
+    {"lastName": "Дроботов", "firstName": "Алексей", "post": "доцент каф. АПП"}
+  ]
+}
+--boundary--
