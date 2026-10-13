@@ -8,7 +8,9 @@ public final class PersonNames {
 
     /** "Иванов", "Иван", "Иванович" -> "Иванов И.И."; без отчества -> "Иванов И." */
     public static String shortName(String lastName, String firstName, String middleName) {
-        StringBuilder result = new StringBuilder(lastName).append(' ').append(initial(firstName));
+        StringBuilder result = new StringBuilder(lastName.trim())
+                .append(' ')
+                .append(initial(firstName));
         if (middleName != null && !middleName.isBlank()) {
             result.append(initial(middleName));
         }
