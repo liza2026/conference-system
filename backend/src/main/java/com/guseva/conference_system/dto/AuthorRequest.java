@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.springframework.util.StringUtils;
 
 public record AuthorRequest (
         @NotBlank @Size(max = 100) @Pattern(regexp = "^[\\p{L}][\\p{L} '\\-]*$",
@@ -23,4 +24,13 @@ public record AuthorRequest (
         @NotBlank String phone,
         @NotBlank @Email String email,
         @NotNull Funding funding) {
+
+    public AuthorRequest {
+        lastName = StringUtils.trimWhitespace(lastName);
+        firstName = StringUtils.trimWhitespace(firstName);
+        middleName = StringUtils.hasText(middleName) ? middleName.trim() : null;
+        groupName = StringUtils.trimWhitespace(groupName);
+        phone = StringUtils.trimWhitespace(phone);
+        email = StringUtils.trimWhitespace(email);
+    }
 }
