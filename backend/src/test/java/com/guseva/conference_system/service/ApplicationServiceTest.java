@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.guseva.conference_system.exception.ApplicationStateException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,6 +61,113 @@ class ApplicationServiceTest {
     void submitUnknownDirectionFails() {
         assertThatThrownBy(() -> service.submit(request("Название", 99, 1),
                 "thesis.docx", new byte[] {1}))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    // Изменение меняет название и направление, а прежний файл остаётся, если новый не прислан
+    @Test
+    void updateChangesFieldsAndKeepsFile() {
+        Application saved = service.submit(request("Старое название", 2, 1),
+                "thesis.docx", new byte[] {1, 2, 3});
+        reload();
+
+        service.update(saved.getId(), request("Новое название", 7, 1), null, null);
+        reload();
+
+        Application found = service.get(saved.getId());
+        assertThat(found.getTitle()).isEqualTo("Новое название");
+        assertThat(found.getDirection().getId()).isEqualTo((short) 7);
+        assertThat(found.getThesisFileName()).isEqualTo("thesis.docx");
+        assertThat(found.getThesisFile()).isEqualTo(new byte[] {1, 2, 3});
+    }
+
+    // Если прислан новый файл, он заменяет прежний
+    @Test
+    void updateReplacesFile() {
+        Application saved = service.submit(request("Название", 2, 1),
+                "old.docx", new byte[] {1});
+        reload();
+
+        service.update(saved.getId(), request("Название", 2, 1), "new.doc", new byte[] {9, 9});
+        reload();
+
+        Application found = service.get(saved.getId());
+        assertThat(found.getThesisFileName()).isEqualTo("new.doc");
+        assertThat(found.getThesisFile()).isEqualTo(new byte[] {9, 9});
+    }
+
+    // Было два автора, стал один: лишний автор удаляется, ошибок уникальности нет
+    @Test
+    void updateTwoAuthorsToOne() {
+        Application saved = service.submit(request("Название", 2, 2),
+                "thesis.docx", new byte[] {1});
+        reload();
+
+        service.update(saved.getId(), request("Название", 2, 1), null, null);
+        reload();
+
+        Application found = service.get(saved.getId());
+        assertThat(found.getAuthors()).extracting(Author::getLastName).containsExactly("Иванов");
+    }
+
+    // Был один автор, стало два: второй добавляется с номером 2
+    @Test
+    void updateOneAuthorToTwo() {
+        Application saved = service.submit(request("Название", 2, 1),
+                "thesis.docx", new byte[] {1});
+        reload();
+
+        service.update(saved.getId(), request("Название", 2, 2), null, null);
+        reload();
+
+        Application found = service.get(saved.getId());
+        assertThat(found.getAuthors()).extracting(Author::getPosition)
+                .containsExactly((short) 1, (short) 2);
+        assertThat(found.getAuthors()).extracting(Author::getLastName)
+                .containsExactly("Иванов", "Карпов");
+    }
+
+    // Отзыв меняет статус на WITHDRAWN, заявка из базы не удаляется
+    @Test
+    void withdrawSetsStatus() {
+        Application saved = service.submit(request("Название", 2, 1),
+                "thesis.docx", new byte[] {1});
+        reload();
+
+        service.withdraw(saved.getId());
+        reload();
+
+        assertThat(service.get(saved.getId()).getStatus()).isEqualTo(ApplicationStatus.WITHDRAWN);
+    }
+
+    // Отозванную заявку изменить нельзя
+    @Test
+    void updateWithdrawnFails() {
+        Application saved = service.submit(request("Название", 2, 1),
+                "thesis.docx", new byte[] {1});
+        service.withdraw(saved.getId());
+        reload();
+
+        assertThatThrownBy(() -> service.update(saved.getId(), request("Другое", 2, 1), null, null))
+                .isInstanceOf(ApplicationStateException.class);
+    }
+
+    // Отозвать заявку второй раз нельзя
+    @Test
+    void withdrawTwiceFails() {
+        Application saved = service.submit(request("Название", 2, 1),
+                "thesis.docx", new byte[] {1});
+        service.withdraw(saved.getId());
+        reload();
+
+        assertThatThrownBy(() -> service.withdraw(saved.getId()))
+                .isInstanceOf(ApplicationStateException.class);
+    }
+
+    // Несуществующая заявка даёт NotFoundException
+    @Test
+    void getUnknownFails() {
+        assertThatThrownBy(() -> service.get(999_999L))
                 .isInstanceOf(NotFoundException.class);
     }
 
