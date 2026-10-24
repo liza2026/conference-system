@@ -1,11 +1,11 @@
 body {
   font-family: system-ui, sans-serif;
   margin: 0;
-  background: #f5f5f5;
-  color: #222;
+  background: #ffe7ff;
+  color: #3b2727;
 }
 header {
-  background: #2c4a7a;
+  background: #b801c9;
   padding: 12px 24px;
 }
 header a {
@@ -24,16 +24,16 @@ table {
   background: #fff;
 }
 th, td {
-  border: 1px solid #ddd;
+  border: 1px solid #ff88ef;
   padding: 8px;
   text-align: left;
   vertical-align: top;
 }
 th {
-  background: #eee;
+  background: #f3d5ff;
 }
 .withdrawn {
-  color: #888;
+  color: #e26eff;
 }
 .error {
   color: #b00020;
