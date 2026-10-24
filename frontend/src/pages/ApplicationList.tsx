@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getApplications, withdrawApplication } from '../api'
 import type { Application, Status } from '../types'
+import { Link } from 'react-router-dom'
 
 const STATUS_TEXT: Record<Status, string> = {
   SUBMITTED: 'Подана',
@@ -35,6 +36,7 @@ export default function ApplicationList() {
   return (
     <>
       <h1>Заявки</h1>
+      <p><Link to="/applications/new">Подать заявку</Link></p>
       {error && <p className="error">{error}</p>}
       <table>
         <thead>
@@ -62,6 +64,7 @@ export default function ApplicationList() {
                 {a.status === 'SUBMITTED' && (
                   <>
                     {' '}
+                    <Link to={`/applications/${a.id}/edit`}>Изменить</Link>{' '}
                     <button onClick={() => withdraw(a.id)}>Отозвать</button>
                   </>
                 )}

@@ -38,3 +38,26 @@ th {
 .error {
   color: #b00020;
 }
+form label {
+  display: block;
+  margin: 8px 0;
+}
+form input,
+form select {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  padding: 6px;
+  margin-top: 4px;
+  box-sizing: border-box;
+}
+form input[type='file'] {
+  max-width: none;
+}
+fieldset {
+  margin: 12px 0;
+  background: #fff;
+}
+button {
+  margin-right: 8px;
+}

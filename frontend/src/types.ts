@@ -32,3 +32,33 @@ export interface Application {
   createdAt: string
   updatedAt: string
 }
+
+export interface Direction {
+  id: number
+  name: string
+}
+
+// Данные, которые участник вводит в форме (то, что принимает бэкенд)
+export interface AuthorInput {
+  lastName: string
+  firstName: string
+  middleName: string
+  groupName: string
+  phone: string
+  email: string
+  funding: Funding
+}
+
+export interface SupervisorInput {
+  lastName: string
+  firstName: string
+  middleName: string
+  post: string
+}
+
+export interface ApplicationInput {
+  title: string
+  directionId: number
+  authors: AuthorInput[]
+  supervisors: SupervisorInput[]
+}

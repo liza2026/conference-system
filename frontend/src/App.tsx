@@ -1,5 +1,6 @@
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import ApplicationList from './pages/ApplicationList'
+import ApplicationForm from './pages/ApplicationForm'
 
 export default function App() {
   return (
@@ -10,6 +11,8 @@ export default function App() {
       <main>
         <Routes>
           <Route path="/" element={<ApplicationList />} />
+          <Route path="/applications/new" element={<ApplicationForm />} />
+          <Route path="/applications/:id/edit" element={<ApplicationForm />} />
         </Routes>
       </main>
     </BrowserRouter>
