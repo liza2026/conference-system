@@ -1,5 +1,6 @@
 package com.guseva.conference_system.controller;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -70,7 +71,8 @@ class ApplicationControllerTest {
     @Test
     void submitEmptyLastNameFails() throws Exception {
         submit(data("Название", 2, author("")), filePart("thesis.docx", new byte[] {1}))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value(containsString("lastName")));
     }
 
     // Фамилия с цифрами или спецсимволами
