@@ -36,7 +36,7 @@ export default function ApplicationList() {
   return (
     <>
       <h1>Заявки</h1>
-      <p><Link to="/applications/new">Подать заявку</Link></p>
+      <p><Link to="/applications/new" className="button">Подать заявку</Link></p>
       {error && <p className="error">{error}</p>}
       <table>
         <thead>
@@ -65,7 +65,7 @@ export default function ApplicationList() {
                   <>
                     {' '}
                     <Link to={`/applications/${a.id}/edit`}>Изменить</Link>{' '}
-                    <button onClick={() => withdraw(a.id)}>Отозвать</button>
+                    <button className="danger" onClick={() => withdraw(a.id)}>Отозвать</button>
                   </>
                 )}
               </td>

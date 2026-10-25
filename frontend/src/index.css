@@ -1,63 +1,149 @@
+:root {
+  color-scheme: light;
+  --bg: #ffe7ff;
+  --text: #3b2727;
+  --primary: #b801c9;
+  --primary-dark: #8f0099;
+  --border: #ff88ef;
+  --head: #f3d5ff;
+  --muted: #e26eff;
+  --danger: #b00020;
+  --danger-dark: #8a001a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: system-ui, sans-serif;
   margin: 0;
-  background: #ffe7ff;
-  color: #3b2727;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.4;
 }
+
 header {
-  background: #b801c9;
-  padding: 12px 24px;
+  background: var(--primary);
+  padding: 14px 24px;
 }
 header a {
   color: #fff;
   text-decoration: none;
   font-weight: bold;
+  font-size: 1.1rem;
 }
+
 main {
   max-width: 1000px;
   margin: 24px auto;
   padding: 0 16px;
 }
+
+/* Узкая колонка по центру: для формы */
+.narrow {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin-top: 0;
+}
+
+/* Таблица */
 table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
 }
 th, td {
-  border: 1px solid #ff88ef;
+  border: 1px solid var(--border);
   padding: 8px;
   text-align: left;
   vertical-align: top;
 }
 th {
-  background: #f3d5ff;
+  background: var(--head);
 }
 .withdrawn {
-  color: #e26eff;
+  color: var(--muted);
 }
-.error {
-  color: #b00020;
+
+/* Кнопки и ссылки-кнопки */
+button, .button {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 14px;
+  margin-right: 8px;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
 }
+button:hover, .button:hover {
+  background: var(--primary-dark);
+}
+button.danger {
+  background: var(--danger);
+}
+button.danger:hover {
+  background: var(--danger-dark);
+}
+td button {
+  padding: 4px 10px;
+  font-size: 0.9rem;
+  margin: 2px 4px 2px 0;
+}
+
+/* Форма */
 form label {
   display: block;
-  margin: 8px 0;
+  margin: 10px 0;
 }
-form input,
-form select {
+form input, form select {
   display: block;
   width: 100%;
-  max-width: 480px;
-  padding: 6px;
+  padding: 8px;
   margin-top: 4px;
-  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  background: #fff;
 }
 form input[type='file'] {
-  max-width: none;
+  border: 0;
+  padding: 8px 0;
 }
 fieldset {
   margin: 12px 0;
+  padding: 8px 16px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   background: #fff;
 }
-button {
-  margin-right: 8px;
+
+.error {
+  color: var(--danger);
+}
+ul.error {
+  padding-left: 20px;
+}
+
+/* Узкие экраны (телефон, небольшое окно) */
+@media (max-width: 700px) {
+  header {
+    padding: 12px 16px;
+  }
+  main {
+    margin: 16px auto;
+  }
+  h1 {
+    font-size: 1.5rem;
+  }
+  table {
+    display: block;
+    overflow-x: auto; /* широкая таблица прокручивается вбок, а не ломает страницу */
+  }
 }

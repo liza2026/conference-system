@@ -139,7 +139,7 @@ export default function ApplicationForm() {
   }
 
   return (
-    <>
+    <div className="narrow">
       <h1>{editing ? `Изменение заявки №${id}` : 'Подача заявки'}</h1>
       {error && (
         <ul className="error">
@@ -186,6 +186,7 @@ export default function ApplicationForm() {
             {form.authors.length > 1 && (
               <button
                 type="button"
+                className="danger"
                 onClick={() =>
                   setForm({ ...form, authors: form.authors.filter((_, k) => k !== i) })
                 }
@@ -216,6 +217,7 @@ export default function ApplicationForm() {
             {form.supervisors.length > 1 && (
               <button
                 type="button"
+                className="danger"
                 onClick={() =>
                   setForm({ ...form, supervisors: form.supervisors.filter((_, k) => k !== i) })
                 }
@@ -253,6 +255,6 @@ export default function ApplicationForm() {
           <Link to="/">Отмена</Link>
         </p>
       </form>
-    </>
+    </div>
   )
 }
