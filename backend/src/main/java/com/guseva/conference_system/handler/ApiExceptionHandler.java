@@ -2,6 +2,7 @@ package com.guseva.conference_system.handler;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -10,6 +11,7 @@ import com.guseva.conference_system.exception.ApplicationStateException;
 import com.guseva.conference_system.exception.DeadlinePassedException;
 import com.guseva.conference_system.exception.NotFoundException;
 
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /** Обработчик ошибок */
@@ -31,6 +33,7 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail invalid(MethodArgumentNotValidException e) {
         String details = e.getBindingResult().getFieldErrors().stream()
+                .sorted(Comparator.comparing(FieldError::getField))
                 .map(f -> f.getField() + ": " + f.getDefaultMessage())
                 .collect(Collectors.joining("; "));
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, details);

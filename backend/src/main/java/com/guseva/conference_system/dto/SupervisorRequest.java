@@ -6,10 +6,10 @@ import jakarta.validation.constraints.Size;
 import org.springframework.util.StringUtils;
 
 public record SupervisorRequest (
-        @NotBlank @Size(max = 100) @Pattern(regexp = "^[\\p{L}][\\p{L} '\\-]*$",
+        @NotBlank @Size(max = 100) @Pattern(regexp = "([\\p{L}][\\p{L} '\\-]*)?$",
                 message = "только буквы, пробел, дефис") String lastName,
 
-        @NotBlank @Size(max = 100) @Pattern(regexp = "^[\\p{L}][\\p{L} '\\-]*$",
+        @NotBlank @Size(max = 100) @Pattern(regexp = "([\\p{L}][\\p{L} '\\-]*)?$",
                 message = "только буквы, пробел, дефис") String firstName,
 
         @Size(max = 100) @Pattern(regexp = "^([\\p{L}][\\p{L} '\\-]*)?$",
