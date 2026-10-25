@@ -23,6 +23,7 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      DEADLINE_T1: ${DEADLINE_T1}
     depends_on:
       db:
         condition: service_healthy
