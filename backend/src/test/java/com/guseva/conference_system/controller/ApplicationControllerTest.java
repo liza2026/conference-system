@@ -72,8 +72,7 @@ class ApplicationControllerTest {
     void submitEmptyLastNameFails() throws Exception {
         submit(data("Название", 2, author("")), filePart("thesis.docx", new byte[] {1}))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value(containsString("lastName")));
-    }
+                .andExpect(jsonPath("$.errors['authors[0].lastName']").exists());    }
 
     // Фамилия с цифрами или спецсимволами
     @Test

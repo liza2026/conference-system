@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
+import com.guseva.conference_system.exception.InvalidFileException;
 import com.guseva.conference_system.util.FileNames;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -56,11 +57,10 @@ public class ApplicationController {
     public ApplicationResponse submit(@RequestPart("data") @Valid ApplicationRequest data,
                                       @RequestPart("file") MultipartFile file) throws IOException {
         if (file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Файл тезисов пуст");
+            throw new InvalidFileException("Файл тезисов пуст");
         }
         if (!ALLOWED_EXTENSIONS.contains(FileNames.extension(file.getOriginalFilename()))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Тезисы принимаются только в форматах .doc и .docx");
+            throw new InvalidFileException("Тезисы принимаются только в форматах .doc и .docx");
         }
         return mapper.toResponse(service.submit(data, file.getOriginalFilename(), file.getBytes()));
     }
@@ -72,8 +72,7 @@ public class ApplicationController {
                                       @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         boolean hasFile = file != null && !file.isEmpty();
         if (hasFile && !ALLOWED_EXTENSIONS.contains(FileNames.extension(file.getOriginalFilename()))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Тезисы принимаются только в форматах .doc и .docx");
+            throw new InvalidFileException("Тезисы принимаются только в форматах .doc и .docx");
         }
         return mapper.toResponse(service.update(id, data,
                 hasFile ? file.getOriginalFilename() : null,
