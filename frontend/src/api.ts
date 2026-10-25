@@ -1,16 +1,27 @@
 import type { Application, ApplicationInput, Direction } from './types'
 
-// Если бэкенд ответил ошибкой, достаём из ответа понятный текст (поле "detail")
+// Ошибка запроса: общий текст и, если есть, ошибки по полям формы
+export class ApiError extends Error {
+  fieldErrors: Record<string, string>
+
+  constructor(message: string, fieldErrors: Record<string, string> = {}) {
+    super(message)
+    this.fieldErrors = fieldErrors
+  }
+}
+
 async function check(response: Response): Promise<Response> {
   if (!response.ok) {
     let message = `Ошибка ${response.status}`
+    let fieldErrors: Record<string, string> = {}
     try {
       const problem = await response.json()
       if (problem.detail) message = problem.detail
+      if (problem.errors) fieldErrors = problem.errors
     } catch {
-      // тело ответа не JSON, остаётся общий текст
+      // тело ответа не JSON: остаётся общий текст
     }
-    throw new Error(message)
+    throw new ApiError(message, fieldErrors)
   }
   return response
 }

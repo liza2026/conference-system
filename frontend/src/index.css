@@ -147,3 +147,13 @@ ul.error {
     overflow-x: auto; /* широкая таблица прокручивается вбок, а не ломает страницу */
   }
 }
+.field-error {
+  display: block;
+  color: var(--danger);
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+input[aria-invalid='true'],
+select[aria-invalid='true'] {
+  border-color: var(--danger);
+}

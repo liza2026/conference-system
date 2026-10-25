@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { createApplication, getApplication, getDirections, updateApplication } from '../api'
+import {
+  ApiError,
+  createApplication,
+  getApplication,
+  getDirections,
+  updateApplication,
+} from '../api'
 import type { ApplicationInput, AuthorInput, Direction, SupervisorInput } from '../types'
 
 const emptyAuthor = (): AuthorInput => ({
@@ -11,48 +17,35 @@ const emptySupervisor = (): SupervisorInput => ({
   lastName: '', firstName: '', middleName: '', post: '',
 })
 
-// Текстовые поля автора и руководителя: подпись и ключ в данных
-const AUTHOR_FIELDS: { key: keyof AuthorInput; label: string }[] = [
-  { key: 'lastName', label: 'Фамилия' },
-  { key: 'firstName', label: 'Имя' },
-  { key: 'middleName', label: 'Отчество (если есть)' },
-  { key: 'groupName', label: 'Группа' },
-  { key: 'phone', label: 'Телефон' },
-  { key: 'email', label: 'E-mail' },
+// Текстовые поля автора и руководителя: ключ в данных, подпись, обязательность
+const AUTHOR_FIELDS: { key: keyof AuthorInput; label: string; required: boolean; type?: string }[] = [
+  { key: 'lastName', label: 'Фамилия', required: true },
+  { key: 'firstName', label: 'Имя', required: true },
+  { key: 'middleName', label: 'Отчество (если есть)', required: false },
+  { key: 'groupName', label: 'Группа', required: true },
+  { key: 'phone', label: 'Телефон', required: true, type: 'tel' },
+  { key: 'email', label: 'E-mail', required: true, type: 'email' },
 ]
-const SUPERVISOR_FIELDS: { key: keyof SupervisorInput; label: string }[] = [
-  { key: 'lastName', label: 'Фамилия' },
-  { key: 'firstName', label: 'Имя' },
-  { key: 'middleName', label: 'Отчество (если есть)' },
-  { key: 'post', label: 'Должность и кафедра' },
+const SUPERVISOR_FIELDS: { key: keyof SupervisorInput; label: string; required: boolean }[] = [
+  { key: 'lastName', label: 'Фамилия', required: true },
+  { key: 'firstName', label: 'Имя', required: true },
+  { key: 'middleName', label: 'Отчество (если есть)', required: false },
+  { key: 'post', label: 'Должность и кафедра', required: true },
 ]
-const FIELD_LABELS: Record<string, string> = {
-  title: 'Название работы',
-  directionId: 'Направление',
-  lastName: 'Фамилия',
-  firstName: 'Имя',
-  middleName: 'Отчество',
-  groupName: 'Группа',
-  phone: 'Телефон',
-  email: 'E-mail',
-  post: 'Должность и кафедра',
-  authors: 'Авторы',
-  supervisors: 'Руководители',
-}
 
-// "authors[0].firstName: не должно быть пустым" -> "Автор 1, Имя: не должно быть пустым"
-function humanize(message: string): string {
-  return message
-    .replace(/(authors|supervisors)\[(\d+)\]\.(\w+)/g, (_, list, i, field) =>
-      `${list === 'authors' ? 'Автор' : 'Руководитель'} ${Number(i) + 1}, ${FIELD_LABELS[field] ?? field}`)
-    .replace(/\b(title|directionId|authors|supervisors)\b(?=:)/g, (field) => FIELD_LABELS[field] ?? field)
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
+// Подпись + поле + текст ошибки под ним
+function Field({ label, required, error, children }: {
+  label: string
+  required?: boolean
+  error?: string
+  children: ReactNode
+}) {
   return (
     <label>
       {label}
+      {required && ' *'}
       {children}
+      {error && <span className="field-error">{error}</span>}
     </label>
   )
 }
@@ -73,6 +66,8 @@ export default function ApplicationForm() {
   const [file, setFile] = useState<File | null>(null)
   const [currentFileName, setCurrentFileName] = useState('')
   const [error, setError] = useState('')
+  // Ошибки от сервера по полям: "authors[0].lastName" -> "только буквы, пробел, дефис"
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   // При открытии экрана: загрузить направления, а при изменении - ещё и саму заявку
   useEffect(() => {
@@ -105,6 +100,11 @@ export default function ApplicationForm() {
     }
   }, [id, editing])
 
+  // Когда появились ошибки по полям, переводим фокус на первое ошибочное поле
+  useEffect(() => {
+    document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+  }, [fieldErrors])
+
   function setAuthor(index: number, key: keyof AuthorInput, value: string) {
     setForm((f) => ({
       ...f,
@@ -121,45 +121,48 @@ export default function ApplicationForm() {
     }))
   }
 
+  // Отправка формы. Пустые обязательные поля браузер ловит сам, до этого места не доходя.
   function submit(e: FormEvent) {
-    e.preventDefault()
+    e.preventDefault() // не даём браузеру перезагрузить страницу
     setError('')
-    if (!form.directionId) {
-      setError('Выберите направление')
-      return
-    }
-    if (!editing && !file) {
-      setError('Выберите файл тезисов (.doc или .docx)')
-      return
-    }
+    setFieldErrors({})
     const request = editing
       ? updateApplication(Number(id), form, file)
       : createApplication(form, file as File)
-    request.then(() => navigate('/')).catch((err: Error) => setError(err.message))
+    request
+      .then(() => navigate('/'))
+      .catch((err: Error) => {
+        setError(err.message)
+        const fields = err instanceof ApiError ? err.fieldErrors : {}
+        setFieldErrors(fields)
+        // Ошибка не про поля (например, срок вышел): показываем текст наверху страницы
+        if (Object.keys(fields).length === 0) window.scrollTo({ top: 0 })
+      })
   }
 
   return (
     <div className="narrow">
       <h1>{editing ? `Изменение заявки №${id}` : 'Подача заявки'}</h1>
-      {error && (
-        <ul className="error">
-          {humanize(error).split('; ').map((m) => (
-            <li key={m}>{m}</li>
-          ))}
-        </ul>
-      )}
+      {error && <p className="error">{error}</p>}
 
       <form onSubmit={submit}>
-        <Field label="Название работы">
-          <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        <Field label="Название работы" required error={fieldErrors['title']}>
+          <input
+            required
+            aria-invalid={!!fieldErrors['title']}
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
         </Field>
 
-        <Field label="Направление">
+        <Field label="Направление" required error={fieldErrors['directionId']}>
           <select
-            value={form.directionId}
+            required
+            aria-invalid={!!fieldErrors['directionId']}
+            value={form.directionId || ''}
             onChange={(e) => setForm({ ...form, directionId: Number(e.target.value) })}
           >
-            <option value={0}>— выберите —</option>
+            <option value="">— выберите —</option>
             {directions.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.id}. {d.name}
@@ -172,12 +175,21 @@ export default function ApplicationForm() {
         {form.authors.map((a, i) => (
           <fieldset key={i}>
             <legend>Автор {i + 1}</legend>
-            {AUTHOR_FIELDS.map((f) => (
-              <Field key={f.key} label={f.label}>
-                <input value={a[f.key]} onChange={(e) => setAuthor(i, f.key, e.target.value)} />
-              </Field>
-            ))}
-            <Field label="Финансовая основа обучения">
+            {AUTHOR_FIELDS.map((f) => {
+              const path = `authors[${i}].${f.key}`
+              return (
+                <Field key={f.key} label={f.label} required={f.required} error={fieldErrors[path]}>
+                  <input
+                    type={f.type ?? 'text'}
+                    required={f.required}
+                    aria-invalid={!!fieldErrors[path]}
+                    value={a[f.key]}
+                    onChange={(e) => setAuthor(i, f.key, e.target.value)}
+                  />
+                </Field>
+              )
+            })}
+            <Field label="Финансовая основа обучения" error={fieldErrors[`authors[${i}].funding`]}>
               <select value={a.funding} onChange={(e) => setAuthor(i, 'funding', e.target.value)}>
                 <option value="BUDGET">Бюджет</option>
                 <option value="CONTRACT">Контракт</option>
@@ -209,11 +221,19 @@ export default function ApplicationForm() {
         {form.supervisors.map((s, i) => (
           <fieldset key={i}>
             <legend>Руководитель {i + 1}</legend>
-            {SUPERVISOR_FIELDS.map((f) => (
-              <Field key={f.key} label={f.label}>
-                <input value={s[f.key]} onChange={(e) => setSupervisor(i, f.key, e.target.value)} />
-              </Field>
-            ))}
+            {SUPERVISOR_FIELDS.map((f) => {
+              const path = `supervisors[${i}].${f.key}`
+              return (
+                <Field key={f.key} label={f.label} required={f.required} error={fieldErrors[path]}>
+                  <input
+                    required={f.required}
+                    aria-invalid={!!fieldErrors[path]}
+                    value={s[f.key]}
+                    onChange={(e) => setSupervisor(i, f.key, e.target.value)}
+                  />
+                </Field>
+              )
+            })}
             {form.supervisors.length > 1 && (
               <button
                 type="button"
@@ -240,15 +260,17 @@ export default function ApplicationForm() {
 
         <h2>Тезисы</h2>
         {editing && (
-          <p>
-            Текущий файл: {currentFileName}. Выберите новый, только если хотите заменить.
-          </p>
+          <p>Текущий файл: {currentFileName}. Выберите новый, только если хотите заменить.</p>
         )}
-        <input
-          type="file"
-          accept=".doc,.docx"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        />
+        <Field label="Файл тезисов (.doc или .docx)" required={!editing} error={fieldErrors['file']}>
+          <input
+            type="file"
+            accept=".doc,.docx"
+            required={!editing}
+            aria-invalid={!!fieldErrors['file']}
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
+        </Field>
 
         <p>
           <button type="submit">{editing ? 'Сохранить' : 'Подать заявку'}</button>
