@@ -67,6 +67,31 @@ class ApplicationControllerTest {
 
     // ошибки 400: плохие данные
 
+    // Телефон не из цифр: 400, ошибка относится к полю телефона
+    @Test
+    void submitInvalidPhoneFails() throws Exception {
+        submit(data("Название", 2, author("Иванов", "ivanov@mail.ru", "сапис")),
+                filePart("thesis.docx", new byte[] {1}))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors['authors[0].phone']").exists());
+    }
+
+    // Слишком короткий номер (мало цифр)
+    @Test
+    void submitShortPhoneFails() throws Exception {
+        submit(data("Название", 2, author("Иванов", "ivanov@mail.ru", "123")),
+                filePart("thesis.docx", new byte[] {1}))
+                .andExpect(status().isBadRequest());
+    }
+
+    // Номер с плюсом, пробелами и скобками принимается
+    @Test
+    void submitPhoneWithPlusAndBracketsReturns201() throws Exception {
+        submit(data("Название", 2, author("Иванов", "ivanov@mail.ru", "+7 (900) 000-00-00")),
+                filePart("thesis.docx", new byte[] {1}))
+                .andExpect(status().isCreated());
+    }
+
     // Пустая фамилия автора
     @Test
     void submitEmptyLastNameFails() throws Exception {
@@ -194,14 +219,18 @@ class ApplicationControllerTest {
 
     // JSON одного автора
     private String author(String lastName) {
-        return author(lastName, "ivanov@mail.ru");
+        return author(lastName, "ivanov@mail.ru", "8-900-000-00-00");
     }
 
     private String author(String lastName, String email) {
+        return author(lastName, email, "8-900-000-00-00");
+    }
+
+    private String author(String lastName, String email, String phone) {
         return """
                 {"lastName": "%s", "firstName": "Иван", "middleName": "Иванович",
-                 "groupName": "УТС-420", "phone": "8-900-000-00-00",
-                 "email": "%s", "funding": "BUDGET"}""".formatted(lastName, email);
+                 "groupName": "УТС-420", "phone": "%s",
+                 "email": "%s", "funding": "BUDGET"}""".formatted(lastName, phone, email);
     }
 
     // JSON данных заявки с заданными авторами и одним руководителем

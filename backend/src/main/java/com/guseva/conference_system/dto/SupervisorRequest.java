@@ -15,7 +15,7 @@ public record SupervisorRequest (
         @Size(max = 100) @Pattern(regexp = "^([\\p{L}][\\p{L} '\\-]*)?$",
                 message = "только буквы, пробел, дефис") String middleName,
 
-        @NotBlank String post) {
+        @NotBlank @Size(max = 255) String post) {
 
     public SupervisorRequest {
         lastName = StringUtils.trimWhitespace(lastName);

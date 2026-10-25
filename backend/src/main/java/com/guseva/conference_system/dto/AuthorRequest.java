@@ -20,9 +20,11 @@ public record AuthorRequest (
         @Size(max = 100) @Pattern(regexp = "^([\\p{L}][\\p{L} '\\-]*)?$",
                 message = "только буквы, пробел, дефис") String middleName,
 
-        @NotBlank String groupName,
-        @NotBlank String phone,
-        @NotBlank @Email String email,
+        @NotBlank @Size(max = 50) String groupName,
+        @NotBlank @Size(max = 30)
+        @Pattern(regexp = "^(?:(?=(?:\\D*\\d){10,11}\\D*$)\\+?[0-9\\s()\\-]+)?$",
+                message = "укажите номер из 10-11 цифр, например 8-900-000-00-00") String phone,
+        @NotBlank @Size(max = 255) @Email String email,
         @NotNull Funding funding) {
 
     public AuthorRequest {
