@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import {
-  ApiError,
-  createApplication,
-  getApplication,
-  getDirections,
-  updateApplication,
-} from '../api'
+import { createApplication, getApplication, getDirections, updateApplication } from '../api'
+import { ApiError } from '../ApiError'
+import AuthorFieldset from '../components/AuthorFieldset'
+import Field from '../components/Field'
+import SupervisorFieldset from '../components/SupervisorFieldset'
 import type { ApplicationInput, AuthorInput, Direction, SupervisorInput } from '../types'
 
 const emptyAuthor = (): AuthorInput => ({
@@ -16,39 +14,6 @@ const emptyAuthor = (): AuthorInput => ({
 const emptySupervisor = (): SupervisorInput => ({
   lastName: '', firstName: '', middleName: '', post: '',
 })
-
-// Текстовые поля автора и руководителя: ключ в данных, подпись, обязательность
-const AUTHOR_FIELDS: { key: keyof AuthorInput; label: string; required: boolean; type?: string }[] = [
-  { key: 'lastName', label: 'Фамилия', required: true },
-  { key: 'firstName', label: 'Имя', required: true },
-  { key: 'middleName', label: 'Отчество (если есть)', required: false },
-  { key: 'groupName', label: 'Группа', required: true },
-  { key: 'phone', label: 'Телефон', required: true, type: 'tel' },
-  { key: 'email', label: 'E-mail', required: true, type: 'email' },
-]
-const SUPERVISOR_FIELDS: { key: keyof SupervisorInput; label: string; required: boolean }[] = [
-  { key: 'lastName', label: 'Фамилия', required: true },
-  { key: 'firstName', label: 'Имя', required: true },
-  { key: 'middleName', label: 'Отчество (если есть)', required: false },
-  { key: 'post', label: 'Должность и кафедра', required: true },
-]
-
-// Подпись + поле + текст ошибки под ним
-function Field({ label, required, error, children }: {
-  label: string
-  required?: boolean
-  error?: string
-  children: ReactNode
-}) {
-  return (
-    <label>
-      {label}
-      {required && ' *'}
-      {children}
-      {error && <span className="field-error">{error}</span>}
-    </label>
-  )
-}
 
 export default function ApplicationForm() {
   // Есть id в адресе - изменение заявки, нет - подача новой
@@ -143,7 +108,7 @@ export default function ApplicationForm() {
   return (
     <div className="narrow">
       <h1>{editing ? `Изменение заявки №${id}` : 'Подача заявки'}</h1>
-      {error && <p className="error">{error}</p>}
+      {error && Object.keys(fieldErrors).length === 0 && <p className="error">{error}</p>}
 
       <form onSubmit={submit}>
         <Field label="Название работы" required error={fieldErrors['title']}>
@@ -173,40 +138,17 @@ export default function ApplicationForm() {
 
         <h2>Авторы</h2>
         {form.authors.map((a, i) => (
-          <fieldset key={i}>
-            <legend>Автор {i + 1}</legend>
-            {AUTHOR_FIELDS.map((f) => {
-              const path = `authors[${i}].${f.key}`
-              return (
-                <Field key={f.key} label={f.label} required={f.required} error={fieldErrors[path]}>
-                  <input
-                    type={f.type ?? 'text'}
-                    required={f.required}
-                    aria-invalid={!!fieldErrors[path]}
-                    value={a[f.key]}
-                    onChange={(e) => setAuthor(i, f.key, e.target.value)}
-                  />
-                </Field>
-              )
-            })}
-            <Field label="Финансовая основа обучения" error={fieldErrors[`authors[${i}].funding`]}>
-              <select value={a.funding} onChange={(e) => setAuthor(i, 'funding', e.target.value)}>
-                <option value="BUDGET">Бюджет</option>
-                <option value="CONTRACT">Контракт</option>
-              </select>
-            </Field>
-            {form.authors.length > 1 && (
-              <button
-                type="button"
-                className="danger"
-                onClick={() =>
-                  setForm({ ...form, authors: form.authors.filter((_, k) => k !== i) })
-                }
-              >
-                Удалить автора
-              </button>
-            )}
-          </fieldset>
+          <AuthorFieldset
+            key={i}
+            index={i}
+            author={a}
+            errors={fieldErrors}
+            canRemove={form.authors.length > 1}
+            onChange={(key, value) => setAuthor(i, key, value)}
+            onRemove={() =>
+              setForm({ ...form, authors: form.authors.filter((_, k) => k !== i) })
+            }
+          />
         ))}
         {form.authors.length < 2 && (
           <button
@@ -219,33 +161,17 @@ export default function ApplicationForm() {
 
         <h2>Научные руководители</h2>
         {form.supervisors.map((s, i) => (
-          <fieldset key={i}>
-            <legend>Руководитель {i + 1}</legend>
-            {SUPERVISOR_FIELDS.map((f) => {
-              const path = `supervisors[${i}].${f.key}`
-              return (
-                <Field key={f.key} label={f.label} required={f.required} error={fieldErrors[path]}>
-                  <input
-                    required={f.required}
-                    aria-invalid={!!fieldErrors[path]}
-                    value={s[f.key]}
-                    onChange={(e) => setSupervisor(i, f.key, e.target.value)}
-                  />
-                </Field>
-              )
-            })}
-            {form.supervisors.length > 1 && (
-              <button
-                type="button"
-                className="danger"
-                onClick={() =>
-                  setForm({ ...form, supervisors: form.supervisors.filter((_, k) => k !== i) })
-                }
-              >
-                Удалить руководителя
-              </button>
-            )}
-          </fieldset>
+          <SupervisorFieldset
+            key={i}
+            index={i}
+            supervisor={s}
+            errors={fieldErrors}
+            canRemove={form.supervisors.length > 1}
+            onChange={(key, value) => setSupervisor(i, key, value)}
+            onRemove={() =>
+              setForm({ ...form, supervisors: form.supervisors.filter((_, k) => k !== i) })
+            }
+          />
         ))}
         {form.supervisors.length < 2 && (
           <button
