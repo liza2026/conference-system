@@ -26,6 +26,27 @@ const SUPERVISOR_FIELDS: { key: keyof SupervisorInput; label: string }[] = [
   { key: 'middleName', label: 'Отчество (если есть)' },
   { key: 'post', label: 'Должность и кафедра' },
 ]
+const FIELD_LABELS: Record<string, string> = {
+  title: 'Название работы',
+  directionId: 'Направление',
+  lastName: 'Фамилия',
+  firstName: 'Имя',
+  middleName: 'Отчество',
+  groupName: 'Группа',
+  phone: 'Телефон',
+  email: 'E-mail',
+  post: 'Должность и кафедра',
+  authors: 'Авторы',
+  supervisors: 'Руководители',
+}
+
+// "authors[0].firstName: не должно быть пустым" -> "Автор 1, Имя: не должно быть пустым"
+function humanize(message: string): string {
+  return message
+    .replace(/(authors|supervisors)\[(\d+)\]\.(\w+)/g, (_, list, i, field) =>
+      `${list === 'authors' ? 'Автор' : 'Руководитель'} ${Number(i) + 1}, ${FIELD_LABELS[field] ?? field}`)
+    .replace(/\b(title|directionId|authors|supervisors)\b(?=:)/g, (field) => FIELD_LABELS[field] ?? field)
+}
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -62,8 +83,21 @@ export default function ApplicationForm() {
           setForm({
             title: a.title,
             directionId: a.directionId,
-            authors: a.authors.map((x) => ({ ...x, middleName: x.middleName ?? '' })),
-            supervisors: a.supervisors.map((x) => ({ ...x, middleName: x.middleName ?? '' })),
+            authors: a.authors.map((x) => ({
+              lastName: x.lastName,
+              firstName: x.firstName,
+              middleName: x.middleName ?? '',
+              groupName: x.groupName,
+              phone: x.phone,
+              email: x.email,
+              funding: x.funding,
+            })),
+            supervisors: a.supervisors.map((x) => ({
+              lastName: x.lastName,
+              firstName: x.firstName,
+              middleName: x.middleName ?? '',
+              post: x.post,
+            })),
           })
           setCurrentFileName(a.thesisFileName)
         })
@@ -107,7 +141,13 @@ export default function ApplicationForm() {
   return (
     <>
       <h1>{editing ? `Изменение заявки №${id}` : 'Подача заявки'}</h1>
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <ul className="error">
+          {humanize(error).split('; ').map((m) => (
+            <li key={m}>{m}</li>
+          ))}
+        </ul>
+      )}
 
       <form onSubmit={submit}>
         <Field label="Название работы">
