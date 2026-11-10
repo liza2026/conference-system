@@ -55,10 +55,6 @@ public class Application {
     @OrderBy("position")
     private List<Author> authors = new ArrayList<>();
 
-    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("position")
-    private List<Supervisor> supervisors = new ArrayList<>();
-
     protected Application() {
     }
 
@@ -90,28 +86,14 @@ public class Application {
         this.updatedAt = now;
     }
 
-    /** Добавляет автора; его номер (1 или 2) выставляется по порядку. */
-    public Author addAuthor(String lastName, String firstName, String middleName, String groupName,
-                            String phone, String email, Funding funding) {
-        Author author = new Author(this, authors.size() + 1, lastName, firstName, middleName,
-                groupName, phone, email, funding);
+    public Author addAuthor(User user) {
+        Author author = new Author(this, user, (short) (authors.size() + 1));
         authors.add(author);
         return author;
     }
 
     public void removeLastAuthor() {
         authors.remove(authors.size() - 1);
-    }
-
-    public Supervisor addSupervisor(String lastName, String firstName, String middleName, String post) {
-        Supervisor supervisor = new Supervisor(this, supervisors.size() + 1,
-                lastName, firstName, middleName, post);
-        supervisors.add(supervisor);
-        return supervisor;
-    }
-
-    public void removeLastSupervisor() {
-        supervisors.remove(supervisors.size() - 1);
     }
 
     public Long getId() { return id; }
@@ -123,5 +105,4 @@ public class Application {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public List<Author> getAuthors() { return authors; }
-    public List<Supervisor> getSupervisors() { return supervisors; }
 }

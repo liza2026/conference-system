@@ -1,9 +1,9 @@
 package com.guseva.conference_system.dto;
 
-public record SupervisorResponse (
-        short position,
+public record UserResponse(
+        Long id,
         String lastName,
         String firstName,
         String middleName,
-        String post) {
-}
+        String email
+) {}

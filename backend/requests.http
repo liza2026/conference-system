@@ -1,5 +1,42 @@
-### 1. Подать заявку (два автора, у второго нет отчества)
-POST http://localhost:8080/api/applications
+@baseUrl = http://localhost:8081
+
+### 1. Создать первого пользователя — Иванова
+
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "lastName": "Иванов",
+  "firstName": "Иван",
+  "middleName": "Иванович",
+  "email": "ivanov-{{$uuid}}@mail.ru"
+}
+
+> {%
+    client.global.set("user1", response.body.id);
+%}
+
+
+### 2. Создать второго пользователя — Карпова
+
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "lastName": "Карпов",
+  "firstName": "Кирилл",
+  "middleName": null,
+  "email": "karpov-{{$uuid}}@mail.ru"
+}
+
+> {%
+    client.global.set("user2", response.body.id);
+%}
+
+
+### 3. Подать первую заявку (два автора)
+
+POST {{baseUrl}}/api/applications
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -9,41 +46,76 @@ Content-Type: application/json
 {
   "title": "Разработка математической модели насоса",
   "directionId": 2,
+  "submitterUserId": {{user1}},
   "authors": [
-    {"lastName": "Иванов", "firstName": "Иван", "middleName": "Иванович",
-     "groupName": "УТС-420", "phone": "8-900-000-00-00",
-     "email": "ivanov@mail.ru", "funding": "BUDGET"},
-    {"lastName": "Карпов", "firstName": "Кирилл",
-     "groupName": "АТП-421", "phone": "8-900-111-11-11",
-     "email": "karpov@mail.ru", "funding": "CONTRACT"}
-  ],
-  "supervisors": [
-    {"lastName": "Дроботов", "firstName": "Алексей", "middleName": "Владимирович",
-     "post": "доцент каф. АПП"}
+    {"userId": {{user1}}},
+    {"userId": {{user2}}}
   ]
 }
-
 --boundary
 Content-Disposition: form-data; name="file"; filename="thesis.docx"
 Content-Type: application/octet-stream
 
-тут будет текст тезисов
+Тестовое содержимое файла первой заявки.
 --boundary--
 
-### 2. Список заявок
-GET http://localhost:8080/api/applications
+> {%
+    client.global.set("application1", response.body.id);
+%}
 
-### 3. Скачать файл (имя должно быть "2 – Иванов И.И., Карпов К..docx")
-GET http://localhost:8080/api/applications/1/file
 
-### 4. Отозвать заявку 1
-POST http://localhost:8080/api/applications/1/withdraw
+### 4. Получить список заявок
 
-### 5. Повторный отзыв (ожидаем 409)
-POST http://localhost:8080/api/applications/1/withdraw
+GET {{baseUrl}}/api/applications
 
-### 6. Изменить заявку 2: один автор, другое направление и название, файл не присылаем
-PUT http://localhost:8080/api/applications/2
+
+### 5. Скачать файл первой заявки
+
+GET {{baseUrl}}/api/applications/{{application1}}/file
+
+
+### 6. Отозвать первую заявку
+
+POST {{baseUrl}}/api/applications/{{application1}}/withdraw
+
+
+### 7. Повторно отозвать первую заявку (ожидаем 409)
+
+POST {{baseUrl}}/api/applications/{{application1}}/withdraw
+
+
+### 8. Подать вторую заявку
+
+POST {{baseUrl}}/api/applications
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="data"
+Content-Type: application/json
+
+{
+  "title": "Вторая заявка",
+  "directionId": 2,
+  "submitterUserId": {{user1}},
+  "authors": [
+    {"userId": {{user1}}}
+  ]
+}
+--boundary
+Content-Disposition: form-data; name="file"; filename="second-thesis.docx"
+Content-Type: application/octet-stream
+
+Тестовое содержимое файла второй заявки.
+--boundary--
+
+> {%
+    client.global.set("application2", response.body.id);
+%}
+
+
+### 9. Изменить вторую заявку
+
+PUT {{baseUrl}}/api/applications/{{application2}}
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -53,13 +125,9 @@ Content-Type: application/json
 {
   "title": "Новое название работы",
   "directionId": 7,
+  "submitterUserId": {{user1}},
   "authors": [
-    {"lastName": "Иванов", "firstName": "Иван", "middleName": "Иванович",
-     "groupName": "УТС-420", "phone": "8-900-000-00-00",
-     "email": "ivanov@mail.ru", "funding": "BUDGET"}
-  ],
-  "supervisors": [
-    {"lastName": "Дроботов", "firstName": "Алексей", "post": "доцент каф. АПП"}
+    {"userId": {{user1}}}
   ]
 }
 --boundary--

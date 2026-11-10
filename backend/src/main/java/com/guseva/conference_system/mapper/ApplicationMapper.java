@@ -2,16 +2,13 @@ package com.guseva.conference_system.mapper;
 
 import java.util.stream.Collectors;
 
-import com.guseva.conference_system.util.FileNames;
-import org.springframework.stereotype.Component;
-
 import com.guseva.conference_system.dto.ApplicationResponse;
 import com.guseva.conference_system.dto.AuthorResponse;
-import com.guseva.conference_system.dto.SupervisorResponse;
 import com.guseva.conference_system.entity.Application;
 import com.guseva.conference_system.entity.Author;
-import com.guseva.conference_system.entity.Supervisor;
+import com.guseva.conference_system.util.FileNames;
 import com.guseva.conference_system.util.PersonNames;
+import org.springframework.stereotype.Component;
 
 /** Превращает сущности в ответы API */
 @Component
@@ -26,30 +23,37 @@ public class ApplicationMapper {
                 a.getStatus(),
                 thesisFileName(a),
                 a.getAuthors().stream().map(this::toResponse).toList(),
-                a.getSupervisors().stream().map(this::toResponse).toList(),
                 a.getCreatedAt(),
-                a.getUpdatedAt());
+                a.getUpdatedAt()
+        );
     }
 
     private AuthorResponse toResponse(Author a) {
-        return new AuthorResponse(a.getPosition(), a.getLastName(), a.getFirstName(),
-                a.getMiddleName(), a.getGroupName(), a.getPhone(), a.getEmail(), a.getFunding());
-    }
-
-    private SupervisorResponse toResponse(Supervisor s) {
-        return new SupervisorResponse(s.getPosition(), s.getLastName(), s.getFirstName(),
-                s.getMiddleName(), s.getPost());
+        return new AuthorResponse(
+                a.getPosition(),
+                a.getUser().getId(),
+                a.getUser().getLastName(),
+                a.getUser().getFirstName(),
+                a.getUser().getMiddleName(),
+                a.getUser().getEmail()
+        );
     }
 
     /**
-     * Имя файла по шаблону: "номер направления – фамилии и инициалы авторов",
-     * например "2 – Иванов И.И., Карпов К.К.docx"
+     * Имя файла по шаблону:
+     * «номер направления – фамилии и инициалы авторов».
      */
     public String thesisFileName(Application a) {
         String authors = a.getAuthors().stream()
-                .map(x -> PersonNames.shortName(x.getLastName(), x.getFirstName(), x.getMiddleName()))
+                .map(author -> PersonNames.shortName(
+                        author.getUser().getLastName(),
+                        author.getUser().getFirstName(),
+                        author.getUser().getMiddleName()
+                ))
                 .collect(Collectors.joining(", "));
+
         String extension = FileNames.extension(a.getThesisFileName());
+
         return a.getDirection().getId() + " – " + authors
                 + (extension.isEmpty() ? "" : "." + extension);
     }

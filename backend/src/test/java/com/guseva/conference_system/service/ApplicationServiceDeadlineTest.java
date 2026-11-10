@@ -1,3 +1,4 @@
+
 package com.guseva.conference_system.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Import;
 
 import com.guseva.conference_system.TestcontainersConfiguration;
 import com.guseva.conference_system.dto.ApplicationRequest;
+import com.guseva.conference_system.dto.AuthorRequest;
 import com.guseva.conference_system.exception.DeadlinePassedException;
 
 // Срок Т1 в прошлом: подавать, изменять и отзывать заявки уже нельзя
@@ -21,28 +23,37 @@ class ApplicationServiceDeadlineTest {
     @Autowired
     ApplicationService service;
 
-    // Пустая заявка: срок проверяется раньше всего остального, поэтому содержимое не важно
+    // Срок проверяется раньше остальных условий,
+    // поэтому для теста достаточно корректно созданного запроса.
     private final ApplicationRequest request =
-            new ApplicationRequest("Название", (short) 2, List.of(), List.of());
+            new ApplicationRequest(
+                    "Название",
+                    (short) 2,
+                    1L,
+                    List.of(new AuthorRequest(1L))
+            );
 
     // После Т1 подать заявку нельзя
     @Test
     void submitAfterDeadlineFails() {
-        assertThatThrownBy(() -> service.submit(request, "thesis.docx", new byte[] {1}))
+        assertThatThrownBy(() ->
+                service.submit(request, "thesis.docx", new byte[] {1}))
                 .isInstanceOf(DeadlinePassedException.class);
     }
 
-    // После Т1 изменить заявку нельзя (срок проверяется раньше, чем поиск заявки)
+    // После Т1 изменить заявку нельзя
     @Test
     void updateAfterDeadlineFails() {
-        assertThatThrownBy(() -> service.update(1L, request, null, null))
+        assertThatThrownBy(() ->
+                service.update(1L, request, null, null))
                 .isInstanceOf(DeadlinePassedException.class);
     }
 
     // После Т1 отозвать заявку нельзя
     @Test
     void withdrawAfterDeadlineFails() {
-        assertThatThrownBy(() -> service.withdraw(1L))
+        assertThatThrownBy(() ->
+                service.withdraw(1L))
                 .isInstanceOf(DeadlinePassedException.class);
     }
 }

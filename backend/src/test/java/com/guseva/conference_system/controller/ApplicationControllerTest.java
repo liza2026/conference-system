@@ -1,12 +1,13 @@
+
 package com.guseva.conference_system.controller;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,12 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.guseva.conference_system.TestcontainersConfiguration;
+import com.guseva.conference_system.entity.User;
+import com.guseva.conference_system.repository.UserRepository;
 import com.jayway.jsonpath.JsonPath;
 
-// Срок Т1 в будущем. Запросы идут в контроллер без запуска сервера (MockMvc)
-// @Transactional: после каждого теста база откатывается
+// Срок Т1 в будущем. Запросы идут в контроллер без запуска сервера (MockMvc).
+// После каждого теста транзакция откатывается.
 @SpringBootTest(properties = "conference.deadline-t1=2099-12-31T23:59:59Z")
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
@@ -34,26 +37,31 @@ class ApplicationControllerTest {
     @Autowired
     MockMvc mockMvc;
 
-    // успешные запросы
+    @Autowired
+    UserRepository users;
 
-    // Корректная заявка принимается: 201, статус SUBMITTED, имя файла собрано по шаблону
+    // Успешные запросы
+
     @Test
     void submitValidReturns201() throws Exception {
-        submit(data("Название", 2, author("Иванов")), filePart("thesis.docx", new byte[] {1}))
+        submit(data("Название", 2, author("Иванов")),
+                filePart("thesis.docx", new byte[] {1}))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("SUBMITTED"))
-                .andExpect(jsonPath("$.thesisFileName").value("2 – Иванов И.И..docx"));
+                .andExpect(jsonPath("$.thesisFileName")
+                        .value("2 – Иванов И.И..docx"));
     }
 
-    // Пробелы по краям фамилии убираются до проверки
     @Test
-    void submitTrimsSpaces() throws Exception {
-        submit(data("Название", 2, author("  Иванов  ")), filePart("thesis.docx", new byte[] {1}))
+    void submitReturnsAuthorProfile() throws Exception {
+        submit(data("Название", 2, author("Иванов")),
+                filePart("thesis.docx", new byte[] {1}))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.authors[0].lastName").value("Иванов"));
+                .andExpect(jsonPath("$.authors[0].lastName").value("Иванов"))
+                .andExpect(jsonPath("$.authors[0].firstName").value("Иван"))
+                .andExpect(jsonPath("$.authors[0].email").exists());
     }
 
-    // Изменение без нового файла: 200, название и направление новые
     @Test
     void updateWithoutFileReturns200() throws Exception {
         long id = submitValid();
@@ -65,181 +73,158 @@ class ApplicationControllerTest {
                 .andExpect(jsonPath("$.directionId").value(7));
     }
 
-    // ошибки 400: плохие данные
+    // Ошибки 400: некорректные данные
 
-    // Телефон не из цифр: 400, ошибка относится к полю телефона
-    @Test
-    void submitInvalidPhoneFails() throws Exception {
-        submit(data("Название", 2, author("Иванов", "ivanov@mail.ru", "сапис")),
-                filePart("thesis.docx", new byte[] {1}))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['authors[0].phone']").exists());
-    }
-
-    // Слишком короткий номер (мало цифр)
-    @Test
-    void submitShortPhoneFails() throws Exception {
-        submit(data("Название", 2, author("Иванов", "ivanov@mail.ru", "123")),
-                filePart("thesis.docx", new byte[] {1}))
-                .andExpect(status().isBadRequest());
-    }
-
-    // Номер с плюсом, пробелами и скобками принимается
-    @Test
-    void submitPhoneWithPlusAndBracketsReturns201() throws Exception {
-        submit(data("Название", 2, author("Иванов", "ivanov@mail.ru", "+7 (900) 000-00-00")),
-                filePart("thesis.docx", new byte[] {1}))
-                .andExpect(status().isCreated());
-    }
-
-    // Пустая фамилия автора
-    @Test
-    void submitEmptyLastNameFails() throws Exception {
-        submit(data("Название", 2, author("")), filePart("thesis.docx", new byte[] {1}))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors['authors[0].lastName']").exists());    }
-
-    // Фамилия с цифрами или спецсимволами
-    @Test
-    void submitInvalidLastNameFails() throws Exception {
-        submit(data("Название", 2, author("Иванов123")), filePart("thesis.docx", new byte[] {1}))
-                .andExpect(status().isBadRequest());
-    }
-
-    // Некорректный e-mail
-    @Test
-    void submitInvalidEmailFails() throws Exception {
-        submit(data("Название", 2, author("Иванов", "не-почта")),
-                filePart("thesis.docx", new byte[] {1}))
-                .andExpect(status().isBadRequest());
-    }
-
-    // Три автора: больше двух нельзя
     @Test
     void submitThreeAuthorsFails() throws Exception {
-        submit(data("Название", 2, author("Иванов"), author("Карпов"), author("Сидоров")),
+        submit(data("Название", 2,
+                        author("Иванов"),
+                        author("Карпов"),
+                        author("Сидоров")),
                 filePart("thesis.docx", new byte[] {1}))
                 .andExpect(status().isBadRequest());
     }
 
-    // Ни одного автора
     @Test
     void submitNoAuthorsFails() throws Exception {
-        submit(data("Название", 2), filePart("thesis.docx", new byte[] {1}))
+        submit(data("Название", 2),
+                filePart("thesis.docx", new byte[] {1}))
                 .andExpect(status().isBadRequest());
     }
 
-    // Файл не в формате .doc/.docx
     @Test
     void submitPdfFails() throws Exception {
-        submit(data("Название", 2, author("Иванов")), filePart("thesis.pdf", new byte[] {1}))
+        submit(data("Название", 2, author("Иванов")),
+                filePart("thesis.pdf", new byte[] {1}))
                 .andExpect(status().isBadRequest());
     }
 
-    // Пустой файл
     @Test
     void submitEmptyFileFails() throws Exception {
-        submit(data("Название", 2, author("Иванов")), filePart("thesis.docx", new byte[0]))
+        submit(data("Название", 2, author("Иванов")),
+                filePart("thesis.docx", new byte[0]))
                 .andExpect(status().isBadRequest());
     }
 
-    // ошибки 404: не найдено
+    // Ошибки 404: объект не найден
 
-    // Несуществующее направление
     @Test
     void submitUnknownDirectionReturns404() throws Exception {
-        submit(data("Название", 99, author("Иванов")), filePart("thesis.docx", new byte[] {1}))
+        submit(data("Название", 99, author("Иванов")),
+                filePart("thesis.docx", new byte[] {1}))
                 .andExpect(status().isNotFound());
     }
 
-    // Несуществующая заявка
     @Test
     void getUnknownReturns404() throws Exception {
         mockMvc.perform(get("/api/applications/{id}", 999_999))
                 .andExpect(status().isNotFound());
     }
 
-    // ошибки 409: противоречит состоянию заявки
+    // Ошибки 409: конфликт состояния заявки
 
-    // Повторный отзыв
     @Test
     void withdrawTwiceReturns409() throws Exception {
         long id = submitValid();
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .post("/api/applications/{id}/withdraw", id))
+
+        mockMvc.perform(org.springframework.test.web.servlet.request
+                        .MockMvcRequestBuilders.post(
+                                "/api/applications/{id}/withdraw", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("WITHDRAWN"));
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .post("/api/applications/{id}/withdraw", id))
+        mockMvc.perform(org.springframework.test.web.servlet.request
+                        .MockMvcRequestBuilders.post(
+                                "/api/applications/{id}/withdraw", id))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.detail").value("Заявка " + id + " уже отозвана"));
+                .andExpect(jsonPath("$.detail")
+                        .value("Заявка " + id + " уже отозвана"));
     }
 
-    // Изменение отозванной заявки
     @Test
     void updateWithdrawnReturns409() throws Exception {
         long id = submitValid();
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                .post("/api/applications/{id}/withdraw", id));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request
+                .MockMvcRequestBuilders.post(
+                        "/api/applications/{id}/withdraw", id));
 
         mockMvc.perform(multipart(HttpMethod.PUT, "/api/applications/{id}", id)
                         .file(dataPart(data("Другое", 2, author("Иванов")))))
                 .andExpect(status().isConflict());
     }
 
-    // вспомогательные методы
+    // Вспомогательные методы
 
-    // Подать корректную заявку и вернуть её номер
+    // Подать корректную заявку и вернуть её номер.
     private long submitValid() throws Exception {
         String body = submit(data("Название", 2, author("Иванов")),
                 filePart("thesis.docx", new byte[] {1}))
                 .andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
+
         return ((Number) JsonPath.read(body, "$.id")).longValue();
     }
 
-    private ResultActions submit(String dataJson, MockMultipartFile file) throws Exception {
+    private ResultActions submit(String dataJson, MockMultipartFile file)
+            throws Exception {
         return mockMvc.perform(multipart("/api/applications")
                 .file(dataPart(dataJson))
                 .file(file));
     }
 
-    // Часть запроса "data": JSON с данными заявки
+    // JSON-часть запроса с данными заявки.
     private MockMultipartFile dataPart(String json) {
-        return new MockMultipartFile("data", "", MediaType.APPLICATION_JSON_VALUE,
+        return new MockMultipartFile(
+                "data",
+                "",
+                MediaType.APPLICATION_JSON_VALUE,
                 json.getBytes(StandardCharsets.UTF_8));
     }
 
-    // Часть запроса "file": файл тезисов
+    // Файл тезисов.
     private MockMultipartFile filePart(String fileName, byte[] content) {
-        return new MockMultipartFile("file", fileName,
-                MediaType.APPLICATION_OCTET_STREAM_VALUE, content);
+        return new MockMultipartFile(
+                "file",
+                fileName,
+                MediaType.APPLICATION_OCTET_STREAM_VALUE,
+                content);
     }
 
-    // JSON одного автора
+    // Создаём пользователя и возвращаем его ID.
     private String author(String lastName) {
-        return author(lastName, "ivanov@mail.ru", "8-900-000-00-00");
+        User user = users.save(new User(
+                lastName,
+                "Иван",
+                "Иванович",
+                "author-" + UUID.randomUUID() + "@mail.ru"));
+
+        users.flush();
+
+        return user.getId().toString();
     }
 
-    private String author(String lastName, String email) {
-        return author(lastName, email, "8-900-000-00-00");
-    }
-
-    private String author(String lastName, String email, String phone) {
-        return """
-                {"lastName": "%s", "firstName": "Иван", "middleName": "Иванович",
-                 "groupName": "УТС-420", "phone": "%s",
-                 "email": "%s", "funding": "BUDGET"}""".formatted(lastName, phone, email);
-    }
-
-    // JSON данных заявки с заданными авторами и одним руководителем
+    // JSON заявки. Первый автор одновременно является отправителем.
     private String data(String title, int directionId, String... authors) {
+        String submitterUserId = authors.length == 0 ? "null" : authors[0];
+
         return """
-                {"title": "%s", "directionId": %d,
-                 "authors": [%s],
-                 "supervisors": [{"lastName": "Дроботов", "firstName": "Алексей",
-                                  "post": "доцент каф. АПП"}]}"""
-                .formatted(title, directionId, String.join(",", authors));
+                {
+                    "title": "%s",
+                    "directionId": %d,
+                    "submitterUserId": %s,
+                    "authors": [%s]
+                }
+                """.formatted(
+                title,
+                directionId,
+                submitterUserId,
+                java.util.Arrays.stream(authors)
+                        .map(id -> """
+                                {"userId": %s}
+                                """.formatted(id))
+                        .collect(java.util.stream.Collectors.joining(",")));
     }
 }

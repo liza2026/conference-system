@@ -11,9 +11,9 @@ public record ApplicationResponse (
         Short directionId,
         String directionName,
         ApplicationStatus status,
-        String thesisFileName,   // имя по шаблону из письма, вычисляется, в базе не хранится
+        String thesisFileName,
         List<AuthorResponse> authors,
-        List<SupervisorResponse> supervisors,
         Instant createdAt,
-        Instant updatedAt) {
+        Instant updatedAt
+) {
 }
