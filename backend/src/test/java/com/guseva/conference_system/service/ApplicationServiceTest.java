@@ -57,6 +57,8 @@ class ApplicationServiceTest {
         assertThat(found.getAuthors()).extracting(Author::getPosition)
                 .containsExactly((short) 1, (short) 2);
         assertThat(found.getThesisFileName()).isEqualTo("thesis.docx");
+        assertThat(found.getSubmitter().getId())
+                .isEqualTo(found.getAuthors().get(0).getUser().getId());
         assertThat(found.getThesisFile()).isEqualTo(new byte[] {1, 2, 3});
     }
 
@@ -80,9 +82,11 @@ class ApplicationServiceTest {
         );
         reload();
 
+        Long submitterId = saved.getSubmitter().getId();
+
         service.update(
                 saved.getId(),
-                request("Новое название", 7, 1),
+                requestWithSubmitter("Новое название", 7, submitterId, 1),
                 null,
                 null
         );
@@ -106,9 +110,11 @@ class ApplicationServiceTest {
         );
         reload();
 
+        Long submitterId = saved.getSubmitter().getId();
+
         service.update(
                 saved.getId(),
-                request("Название", 2, 1),
+                requestWithSubmitter("Название", 2, submitterId, 1),
                 "new.doc",
                 new byte[] {9, 9}
         );
@@ -130,9 +136,11 @@ class ApplicationServiceTest {
         );
         reload();
 
+        Long submitterId = saved.getSubmitter().getId();
+
         service.update(
                 saved.getId(),
-                request("Название", 2, 1),
+                requestWithSubmitter("Название", 2, submitterId, 1),
                 null,
                 null
         );
@@ -154,11 +162,13 @@ class ApplicationServiceTest {
                 "thesis.docx",
                 new byte[] {1}
         );
+
+        Long submitterId = saved.getSubmitter().getId();
         reload();
 
         service.update(
                 saved.getId(),
-                request("Название", 2, 2),
+                requestWithSubmitter("Название", 2, submitterId, 2),
                 null,
                 null
         );
@@ -273,6 +283,65 @@ class ApplicationServiceTest {
                 (short) directionId,
                 submitterUserId,
                 authors
+        );
+    }
+
+    private ApplicationRequest requestWithSubmitter(
+            String title,
+            int directionId,
+            Long submitterUserId,
+            int authorCount
+    ) {
+        String[] lastNames = {"Иванов", "Карпов"};
+        List<AuthorRequest> authors = new ArrayList<>();
+
+        authors.add(new AuthorRequest(submitterUserId));
+
+        for (int i = 1; i < authorCount; i++) {
+            User user = new User(
+                    lastNames[i],
+                    "Иван",
+                    null,
+                    "author-" + UUID.randomUUID() + "@mail.ru"
+            );
+
+            entityManager.persist(user);
+            entityManager.flush();
+
+            authors.add(new AuthorRequest(user.getId()));
+        }
+
+        return new ApplicationRequest(
+                title,
+                (short) directionId,
+                submitterUserId,
+                authors
+        );
+    }
+
+
+    private String updateData(
+            String title,
+            int directionId,
+            String submitterUserId,
+            String... authors
+    ) {
+        return """
+            {
+                "title": "%s",
+                "directionId": %d,
+                "submitterUserId": %s,
+                "authors": [%s]
+            }
+            """.formatted(
+                title,
+                directionId,
+                submitterUserId,
+                java.util.Arrays.stream(authors)
+                        .map(id -> """
+                            {"userId": %s}
+                            """.formatted(id))
+                        .collect(java.util.stream.Collectors.joining(","))
         );
     }
 }

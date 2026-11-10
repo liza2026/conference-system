@@ -1,3 +1,4 @@
+
 package com.guseva.conference_system.entity;
 
 import java.time.Instant;
@@ -32,8 +33,16 @@ public class Application {
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "direction_id")
+    @JoinColumn(name = "direction_id", nullable = false)
     private Direction direction;
+
+    /**
+     * Пользователь, который подал заявку.
+     * Не обязательно совпадает с первым автором работы.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "submitter_id", nullable = false)
+    private User submitter;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -51,7 +60,11 @@ public class Application {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "application",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     @OrderBy("position")
     private List<Author> authors = new ArrayList<>();
 
@@ -59,10 +72,17 @@ public class Application {
     }
 
     /** Новая заявка сразу имеет статус «подана». */
-    public Application(String title, Direction direction, String thesisFileName,
-                       byte[] thesisFile, Instant now) {
+    public Application(
+            String title,
+            Direction direction,
+            User submitter,
+            String thesisFileName,
+            byte[] thesisFile,
+            Instant now
+    ) {
         this.title = title;
         this.direction = direction;
+        this.submitter = submitter;
         this.thesisFileName = thesisFileName;
         this.thesisFile = thesisFile;
         this.status = ApplicationStatus.SUBMITTED;
@@ -87,22 +107,58 @@ public class Application {
     }
 
     public Author addAuthor(User user) {
-        Author author = new Author(this, user, (short) (authors.size() + 1));
+        Author author = new Author(
+                this,
+                user,
+                (short) (authors.size() + 1)
+        );
         authors.add(author);
         return author;
     }
 
     public void removeLastAuthor() {
-        authors.remove(authors.size() - 1);
+        if (!authors.isEmpty()) {
+            authors.remove(authors.size() - 1);
+        }
     }
 
-    public Long getId() { return id; }
-    public String getTitle() { return title; }
-    public Direction getDirection() { return direction; }
-    public ApplicationStatus getStatus() { return status; }
-    public String getThesisFileName() { return thesisFileName; }
-    public byte[] getThesisFile() { return thesisFile; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
-    public List<Author> getAuthors() { return authors; }
+    public Long getId() {
+        return id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public Direction getDirection() {
+        return direction;
+    }
+
+    public User getSubmitter() {
+        return submitter;
+    }
+
+    public ApplicationStatus getStatus() {
+        return status;
+    }
+
+    public String getThesisFileName() {
+        return thesisFileName;
+    }
+
+    public byte[] getThesisFile() {
+        return thesisFile;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public List<Author> getAuthors() {
+        return authors;
+    }
 }

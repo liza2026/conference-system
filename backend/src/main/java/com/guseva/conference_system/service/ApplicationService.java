@@ -66,12 +66,19 @@ public class ApplicationService {
 
         Direction direction = findDirection(request.directionId());
 
+        // найти пользователя, который подаёт заявку
+        User submitter = users.findById(request.submitterUserId())
+                .orElseThrow(() -> new NotFoundException(
+                        "Пользователь " + request.submitterUserId() + " не найден"));
+
+        // найти всех авторов работы
         List<User> authors = resolveAuthors(request.authors());
         checkSubmitterIsAuthor(request);
 
         Application application = new Application(
                 request.title(),
                 direction,
+                submitter,
                 fileName,
                 file,
                 now()
@@ -97,6 +104,14 @@ public class ApplicationService {
         checkDeadline();
 
         Application application = findSubmitted(id);
+
+        // нельзя менять подающего пользователя
+        if (!application.getSubmitter().getId()
+                .equals(request.submitterUserId())) {
+            throw new ApplicationStateException(
+                    "Нельзя изменить пользователя, подавшего заявку"
+            );
+        }
 
         List<User> authors = resolveAuthors(request.authors());
         checkSubmitterIsAuthor(request);

@@ -62,16 +62,34 @@ class ApplicationControllerTest {
                 .andExpect(jsonPath("$.authors[0].email").exists());
     }
 
+
     @Test
     void updateWithoutFileReturns200() throws Exception {
         long id = submitValid();
 
+        String body = mockMvc.perform(get("/api/applications/{id}", id))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
+
+        String submitterId = JsonPath.read(body, "$.authors[0].userId").toString();
+
+        String secondAuthorId = author("Карпов");
+
         mockMvc.perform(multipart(HttpMethod.PUT, "/api/applications/{id}", id)
-                        .file(dataPart(data("Новое название", 7, author("Иванов")))))
+                        .file(dataPart(updateData(
+                                "Новое название",
+                                7,
+                                submitterId,
+                                submitterId,
+                                secondAuthorId
+                        ))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Новое название"))
                 .andExpect(jsonPath("$.directionId").value(7));
     }
+
 
     // Ошибки 400: некорректные данные
 
@@ -226,5 +244,30 @@ class ApplicationControllerTest {
                                 {"userId": %s}
                                 """.formatted(id))
                         .collect(java.util.stream.Collectors.joining(",")));
+    }
+
+    private String updateData(
+            String title,
+            int directionId,
+            String submitterUserId,
+            String... authors
+    ) {
+        return """
+            {
+                "title": "%s",
+                "directionId": %d,
+                "submitterUserId": %s,
+                "authors": [%s]
+            }
+            """.formatted(
+                title,
+                directionId,
+                submitterUserId,
+                java.util.Arrays.stream(authors)
+                        .map(id -> """
+                            {"userId": %s}
+                            """.formatted(id))
+                        .collect(java.util.stream.Collectors.joining(","))
+        );
     }
 }
