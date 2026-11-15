@@ -4,7 +4,8 @@ CREATE TABLE app_user (
     last_name   VARCHAR(100) NOT NULL,
     first_name  VARCHAR(100) NOT NULL,
     middle_name VARCHAR(100),
-    email       VARCHAR(255) NOT NULL UNIQUE
+    email       VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE direction_user_role (
@@ -13,7 +14,7 @@ CREATE TABLE direction_user_role (
     direction_id SMALLINT NOT NULL REFERENCES direction(id),
     role         VARCHAR(20) NOT NULL
                  CHECK (role IN ('ORGANIZER', 'EXPERT')),
-                 CONSTRAINT uq_direction_user_role
+    CONSTRAINT uq_direction_user_role
                  UNIQUE (user_id, direction_id, role)
 );
 

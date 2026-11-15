@@ -1,11 +1,7 @@
+
 package com.guseva.conference_system.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "app_user")
@@ -27,6 +23,9 @@ public class User {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
+
     protected User() {
     }
 
@@ -34,12 +33,14 @@ public class User {
             String lastName,
             String firstName,
             String middleName,
-            String email
+            String email,
+            String passwordHash
     ) {
         this.lastName = lastName;
         this.firstName = firstName;
         this.middleName = middleName;
         this.email = email;
+        this.passwordHash = passwordHash;
     }
 
     public Long getId() {
@@ -60,5 +61,9 @@ public class User {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
     }
 }

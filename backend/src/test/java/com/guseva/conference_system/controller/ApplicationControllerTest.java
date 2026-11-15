@@ -212,12 +212,16 @@ class ApplicationControllerTest {
     }
 
     // Создаём пользователя и возвращаем его ID.
+    private static final String TEST_PASSWORD_HASH = "test-password-hash";
+
     private String author(String lastName) {
         User user = users.save(new User(
                 lastName,
                 "Иван",
                 "Иванович",
-                "author-" + UUID.randomUUID() + "@mail.ru"));
+                "author-" + UUID.randomUUID() + "@mail.ru",
+                TEST_PASSWORD_HASH
+        ));
 
         users.flush();
 

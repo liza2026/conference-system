@@ -1,3 +1,4 @@
+
 package com.guseva.conference_system.controller;
 
 import com.guseva.conference_system.dto.UserRequest;
@@ -8,35 +9,55 @@ import com.guseva.conference_system.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
     private final UserRepository users;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserController(UserRepository users) {
+    public UserController(
+            UserRepository users,
+            PasswordEncoder passwordEncoder
+    ) {
         this.users = users;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping
     public ResponseEntity<UserResponse> create(
-            @Valid @RequestBody UserRequest request) {
+            @Valid @RequestBody UserRequest request
+    ) {
 
-        if (users.existsByEmail(request.email())) {
-            throw new ApplicationStateException(
-                    "Пользователь с email " + request.email() + " уже существует");
+        if (request.password().getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Пароль слишком длинный"
+            );
         }
+
+        if (users.existsByEmailIgnoreCase(request.email())) {
+            throw new ApplicationStateException(
+                    "Пользователь с email " + request.email()
+                            + " уже существует"
+            );
+        }
+
+        String passwordHash =
+                passwordEncoder.encode(request.password());
 
         User user = new User(
                 request.lastName(),
                 request.firstName(),
                 request.middleName(),
-                request.email()
+                request.email(),
+                passwordHash
         );
 
         User saved = users.save(user);
@@ -49,6 +70,8 @@ public class UserController {
                 saved.getEmail()
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 }

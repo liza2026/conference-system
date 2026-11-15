@@ -29,6 +29,8 @@ import com.guseva.conference_system.repository.UserRepository;
 @Transactional
 class ApplicationControllerDeadlineTest {
 
+    private static final String TEST_PASSWORD_HASH = "test-password-hash";
+
     @Autowired
     MockMvc mockMvc;
 
@@ -43,7 +45,8 @@ class ApplicationControllerDeadlineTest {
                 "Иванов",
                 "Иван",
                 "Иванович",
-                "author-" + UUID.randomUUID() + "@mail.ru"));
+                "author-" + UUID.randomUUID() + "@mail.ru",
+                TEST_PASSWORD_HASH));
 
         users.flush();
 

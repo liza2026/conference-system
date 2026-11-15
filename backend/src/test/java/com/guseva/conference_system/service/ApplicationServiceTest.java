@@ -33,6 +33,8 @@ import jakarta.persistence.EntityManager;
 @Transactional
 class ApplicationServiceTest {
 
+    private static final String TEST_PASSWORD_HASH = "test-password-hash";
+
     @Autowired
     ApplicationService service;
 
@@ -265,7 +267,8 @@ class ApplicationServiceTest {
                     lastNames[i],
                     "Иван",
                     null,
-                    "author-" + UUID.randomUUID() + "@mail.ru"
+                    "author-" + UUID.randomUUID() + "@mail.ru",
+                    TEST_PASSWORD_HASH
             );
 
             entityManager.persist(user);
@@ -302,7 +305,8 @@ class ApplicationServiceTest {
                     lastNames[i],
                     "Иван",
                     null,
-                    "author-" + UUID.randomUUID() + "@mail.ru"
+                    "author-" + UUID.randomUUID() + "@mail.ru",
+                    TEST_PASSWORD_HASH
             );
 
             entityManager.persist(user);
