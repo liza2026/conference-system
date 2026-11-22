@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,10 +40,26 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(
+    public ResponseEntity<?> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
+
+        // Сначала проверяем, зарегистрирован ли пользователь
+        User user = userRepository
+                .findByEmailIgnoreCase(request.email())
+                .orElse(null);
+
+        if (user == null) {
+            SecurityContextHolder.clearContext();
+
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                    HttpStatus.UNAUTHORIZED,
+                    "Вы ещё не зарегистрированы. Создайте аккаунт."
+            );
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
+        }
 
         try {
             Authentication authentication =
@@ -69,10 +86,6 @@ public class AuthController {
                     httpResponse
             );
 
-            User user = userRepository
-                    .findByEmailIgnoreCase(authentication.getName())
-                    .orElseThrow();
-
             AuthResponse response = new AuthResponse(
                     user.getId(),
                     user.getLastName(),
@@ -85,7 +98,13 @@ public class AuthController {
 
         } catch (AuthenticationException exception) {
             SecurityContextHolder.clearContext();
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                    HttpStatus.UNAUTHORIZED,
+                    "Неверный пароль. Попробуйте ещё раз."
+            );
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
         }
     }
 

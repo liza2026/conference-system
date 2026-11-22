@@ -13,10 +13,35 @@ async function check(response: Response): Promise<Response> {
 
     try {
       const problem = await response.json()
-      if (problem.detail) message = problem.detail
-      if (problem.errors) fieldErrors = problem.errors
+
+      if (problem.detail) {
+        message = problem.detail
+      }
+
+      if (problem.errors) {
+        fieldErrors = problem.errors
+      }
     } catch {
       // Тело ответа не JSON.
+    }
+
+    if (message === `Ошибка ${response.status}`) {
+      switch (response.status) {
+        case 401:
+          message = 'Неверный email или пароль.'
+          break
+        case 403:
+          message = 'У вас нет доступа к этому действию.'
+          break
+        case 404:
+          message = 'Запрашиваемый ресурс не найден.'
+          break
+        case 500:
+          message = 'Внутренняя ошибка сервера. Попробуйте позже.'
+          break
+        default:
+          message = 'Не удалось выполнить запрос. Попробуйте позже.'
+      }
     }
 
     throw new ApiError(message, fieldErrors)
