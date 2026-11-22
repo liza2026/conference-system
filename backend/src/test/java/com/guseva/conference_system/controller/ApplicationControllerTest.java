@@ -1,6 +1,6 @@
-
 package com.guseva.conference_system.controller;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ import com.jayway.jsonpath.JsonPath;
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 @Transactional
+@WithMockUser(username = "test-user")
 class ApplicationControllerTest {
 
     @Autowired
@@ -67,7 +69,9 @@ class ApplicationControllerTest {
     void updateWithoutFileReturns200() throws Exception {
         long id = submitValid();
 
-        String body = mockMvc.perform(get("/api/applications/{id}", id))
+        String body = mockMvc.perform(
+                        get("/api/applications/{id}", id)
+                                .with(user("test-user")))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -84,7 +88,8 @@ class ApplicationControllerTest {
                                 submitterId,
                                 submitterId,
                                 secondAuthorId
-                        ))))
+                        )))
+                        .with(user("test-user")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Новое название"))
                 .andExpect(jsonPath("$.directionId").value(7));
@@ -135,7 +140,8 @@ class ApplicationControllerTest {
 
     @Test
     void getUnknownReturns404() throws Exception {
-        mockMvc.perform(get("/api/applications/{id}", 999_999))
+        mockMvc.perform(get("/api/applications/{id}", 999_999)
+                        .with(user("test-user")))
                 .andExpect(status().isNotFound());
     }
 
@@ -147,13 +153,15 @@ class ApplicationControllerTest {
 
         mockMvc.perform(org.springframework.test.web.servlet.request
                         .MockMvcRequestBuilders.post(
-                                "/api/applications/{id}/withdraw", id))
+                                "/api/applications/{id}/withdraw", id)
+                        .with(user("test-user")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("WITHDRAWN"));
 
         mockMvc.perform(org.springframework.test.web.servlet.request
                         .MockMvcRequestBuilders.post(
-                                "/api/applications/{id}/withdraw", id))
+                                "/api/applications/{id}/withdraw", id)
+                        .with(user("test-user")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.detail")
                         .value("Заявка " + id + " уже отозвана"));
@@ -165,10 +173,12 @@ class ApplicationControllerTest {
 
         mockMvc.perform(org.springframework.test.web.servlet.request
                 .MockMvcRequestBuilders.post(
-                        "/api/applications/{id}/withdraw", id));
+                        "/api/applications/{id}/withdraw", id)
+                .with(user("test-user")));
 
         mockMvc.perform(multipart(HttpMethod.PUT, "/api/applications/{id}", id)
-                        .file(dataPart(data("Другое", 2, author("Иванов")))))
+                        .file(dataPart(data("Другое", 2, author("Иванов"))))
+                        .with(user("test-user")))
                 .andExpect(status().isConflict());
     }
 
@@ -190,7 +200,8 @@ class ApplicationControllerTest {
             throws Exception {
         return mockMvc.perform(multipart("/api/applications")
                 .file(dataPart(dataJson))
-                .file(file));
+                .file(file)
+                .with(user("test-user")));
     }
 
     // JSON-часть запроса с данными заявки.

@@ -3,6 +3,7 @@ package com.guseva.conference_system.config;
 import com.guseva.conference_system.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -37,7 +38,6 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(
             DaoAuthenticationProvider authenticationProvider) {
-
         return new ProviderManager(authenticationProvider);
     }
 
@@ -57,8 +57,13 @@ public class SecurityConfig {
                 .securityContext(context ->
                         context.securityContextRepository(securityContextRepository)
                 )
-                .authorizeHttpRequests(auth ->
-                        auth.anyRequest().permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/api/auth/logout").authenticated()
+                        .requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll()
                 )
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable());

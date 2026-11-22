@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getApplications, withdrawApplication } from '../api'
 import type { Application, Status } from '../types'
-import { Link } from 'react-router-dom'
 
 const STATUS_TEXT: Record<Status, string> = {
   SUBMITTED: 'Подана',
@@ -9,11 +9,9 @@ const STATUS_TEXT: Record<Status, string> = {
 }
 
 export default function ApplicationList() {
-  // useState хранит данные экрана: когда они меняются, React перерисовывает страницу
   const [applications, setApplications] = useState<Application[]>([])
   const [error, setError] = useState('')
 
-  // useEffect с пустым списком [] выполняется один раз, когда экран появился
   useEffect(() => {
     getApplications()
       .then(setApplications)
@@ -24,11 +22,14 @@ export default function ApplicationList() {
     if (!window.confirm('Отозвать заявку? Это действие нельзя отменить.')) {
       return
     }
+
     setError('')
+
     withdrawApplication(id)
       .then((updated) =>
-        // подменить в списке старую заявку обновлённой
-        setApplications((list) => list.map((a) => (a.id === updated.id ? updated : a))),
+        setApplications((list) =>
+          list.map((a) => (a.id === updated.id ? updated : a)),
+        ),
       )
       .catch((e: Error) => setError(e.message))
   }
@@ -36,44 +37,85 @@ export default function ApplicationList() {
   return (
     <>
       <h1>Заявки</h1>
-      <p><Link to="/applications/new" className="button">Подать заявку</Link></p>
+
+      <p>
+        <Link to="/applications/new" className="button">
+          Подать заявку
+        </Link>
+      </p>
+
       {error && <p className="error">{error}</p>}
-      <table>
-        <thead>
-          <tr>
-            <th>№</th>
-            <th>Название</th>
-            <th>Направление</th>
-            <th>Авторы</th>
-            <th>Руководитель</th>
-            <th>Статус</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          {applications.map((a) => (
-            <tr key={a.id} className={a.status === 'WITHDRAWN' ? 'withdrawn' : ''}>
-              <td>{a.id}</td>
-              <td>{a.title}</td>
-              <td>{a.directionId}. {a.directionName}</td>
-              <td>{a.authors.map((x) => `${x.lastName} ${x.firstName}`).join(', ')}</td>
-              <td>{a.supervisors.map((x) => `${x.lastName} ${x.firstName}`).join(', ')}</td>
-              <td>{STATUS_TEXT[a.status]}</td>
-              <td>
-                <a href={`/api/applications/${a.id}/file`}>Скачать файл</a>
-                {a.status === 'SUBMITTED' && (
-                  <>
-                    {' '}
-                    <Link to={`/applications/${a.id}/edit`}>Изменить</Link>{' '}
-                    <button className="danger" onClick={() => withdraw(a.id)}>Отозвать</button>
-                  </>
-                )}
-              </td>
+
+      {applications.length === 0 && !error ? (
+        <p>Заявок пока нет.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>Название</th>
+              <th>Направление</th>
+              <th>Авторы</th>
+              <th>Статус</th>
+              <th>Действия</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      {applications.length === 0 && !error && <p>Заявок пока нет.</p>}
+          </thead>
+
+          <tbody>
+            {applications.map((application) => (
+              <tr
+                key={application.id}
+                className={
+                  application.status === 'WITHDRAWN' ? 'withdrawn' : ''
+                }
+              >
+                <td>{application.id}</td>
+
+                <td>{application.title}</td>
+
+                <td>
+                  {application.directionId}. {application.directionName}
+                </td>
+
+                <td>
+                  {application.authors
+                    .map(
+                      (author) =>
+                        `${author.lastName} ${author.firstName}`,
+                    )
+                    .join(', ')}
+                </td>
+
+                <td>{STATUS_TEXT[application.status]}</td>
+
+                <td>
+                  <a href={`/api/applications/${application.id}/file`}>
+                    Скачать файл
+                  </a>
+
+                  {application.status === 'SUBMITTED' && (
+                    <>
+                      {' '}
+                      <Link
+                        to={`/applications/${application.id}/edit`}
+                      >
+                        Изменить
+                      </Link>
+                      {' '}
+                      <button
+                        className="danger"
+                        onClick={() => withdraw(application.id)}
+                      >
+                        Отозвать
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </>
   )
 }

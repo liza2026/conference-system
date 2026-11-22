@@ -1,23 +1,25 @@
-export type Funding = 'BUDGET' | 'CONTRACT'
 export type Status = 'SUBMITTED' | 'WITHDRAWN'
+
+export interface AuthUser {
+  id: number
+  lastName: string
+  firstName: string
+  middleName: string | null
+  email: string
+}
+
+export interface Direction {
+  id: number
+  name: string
+}
 
 export interface Author {
   position: number
+  userId: number
   lastName: string
   firstName: string
   middleName: string | null
-  groupName: string
-  phone: string
   email: string
-  funding: Funding
-}
-
-export interface Supervisor {
-  position: number
-  lastName: string
-  firstName: string
-  middleName: string | null
-  post: string
 }
 
 export interface Application {
@@ -28,37 +30,17 @@ export interface Application {
   status: Status
   thesisFileName: string
   authors: Author[]
-  supervisors: Supervisor[]
   createdAt: string
   updatedAt: string
 }
 
-export interface Direction {
-  id: number
-  name: string
-}
-
-// Данные, которые участник вводит в форме (то, что принимает бэкенд)
 export interface AuthorInput {
-  lastName: string
-  firstName: string
-  middleName: string
-  groupName: string
-  phone: string
-  email: string
-  funding: Funding
-}
-
-export interface SupervisorInput {
-  lastName: string
-  firstName: string
-  middleName: string
-  post: string
+  userId: number
 }
 
 export interface ApplicationInput {
   title: string
   directionId: number
+  submitterUserId: number
   authors: AuthorInput[]
-  supervisors: SupervisorInput[]
 }

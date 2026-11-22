@@ -15,6 +15,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -62,16 +64,37 @@ public class UserController {
 
         User saved = users.save(user);
 
-        UserResponse response = new UserResponse(
-                saved.getId(),
-                saved.getLastName(),
-                saved.getFirstName(),
-                saved.getMiddleName(),
-                saved.getEmail()
-        );
+        UserResponse response = toResponse(saved);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @GetMapping("/search")
+    public List<UserResponse> search(@RequestParam String q) {
+        String query = q.trim();
+
+        if (query.length() < 2) {
+            return List.of();
+        }
+
+        return users
+                .findTop20ByLastNameContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                        query, query, query
+                )
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private UserResponse toResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getLastName(),
+                user.getFirstName(),
+                user.getMiddleName(),
+                user.getEmail()
+        );
     }
 }

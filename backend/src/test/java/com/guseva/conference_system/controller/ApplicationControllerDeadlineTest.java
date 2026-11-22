@@ -14,6 +14,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,7 +77,9 @@ class ApplicationControllerDeadlineTest {
                                 MediaType.APPLICATION_OCTET_STREAM_VALUE,
                                 new byte[] {1}));
 
-        mockMvc.perform(request)
+        mockMvc.perform(request.with(
+                        SecurityMockMvcRequestPostProcessors.user(user.getEmail())
+                ))
                 .andExpect(status().isConflict());
     }
 }
