@@ -157,3 +157,19 @@ input[aria-invalid='true'],
 select[aria-invalid='true'] {
   border-color: var(--danger);
 }
+
+.password-field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.password-field input {
+  flex: 1;
+  min-width: 0;
+}
+
+.password-field button {
+  white-space: nowrap;
+  margin-right: 0;
+}

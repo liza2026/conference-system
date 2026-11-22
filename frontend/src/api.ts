@@ -66,6 +66,25 @@ export async function login(
   return response.json()
 }
 
+export async function registerUser(data: {
+  lastName: string
+  firstName: string
+  middleName: string | null
+  email: string
+  password: string
+}): Promise<AuthUser> {
+  const response = await check(
+    await fetch('/api/users', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+  )
+
+  return response.json()
+}
+
 export async function logout(): Promise<void> {
   await check(
     await fetch('/api/auth/logout', {

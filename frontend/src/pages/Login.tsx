@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { ApiError } from '../ApiError'
 import Field from '../components/Field'
@@ -16,6 +16,7 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false)
 
   const from = location.state?.from?.pathname || '/'
+  const registered = location.state?.registered === true
 
   if (loading) {
     return <p>Проверка авторизации...</p>
@@ -50,6 +51,12 @@ export default function Login() {
 
       {error && <p className="error">{error}</p>}
 
+      {registered && (
+        <p>
+          Регистрация прошла успешно! Теперь войдите в свой аккаунт.
+        </p>
+      )}
+      
       <form onSubmit={submit}>
         <Field label="E-mail" required>
           <input
@@ -75,6 +82,9 @@ export default function Login() {
           {submitting ? 'Вход...' : 'Войти'}
         </button>
       </form>
+      <p>
+        Ещё нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+      </p>
     </div>
   )
 }

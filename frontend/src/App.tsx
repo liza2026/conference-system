@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './AuthContext'
 import ApplicationList from './pages/ApplicationList'
 import ApplicationForm from './pages/ApplicationForm'
 import Login from './pages/Login'
+import Register from './pages/Register'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -50,6 +51,7 @@ function AppContent() {
       <main>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
           <Route
             path="/"
